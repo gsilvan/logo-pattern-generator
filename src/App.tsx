@@ -12,6 +12,7 @@ function App() {
   const [height, setHeight] = useState(25);
   const [xOffset, setXOffset] = useState(0);
   const [yOffset, setYOffset] = useState(0);
+  const [backgroundColor, setBackgroundColor] = useState("#fff");
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,8 +127,28 @@ function App() {
             </div>
           </div>
         ))}
-        <div>
-          <input type="file" onChange={handleImageUpload} accept="image/*" />
+        <div className="flex">
+          <label className="w-32" htmlFor="selectFile">
+            Logo einfügen
+          </label>
+          <input
+            className="px-2.5"
+            id="selectFile"
+            type="file"
+            onChange={handleImageUpload}
+            accept="image/*"
+          />
+        </div>
+        <div className="flex">
+          <label className="w-32" htmlFor="colorPicker">
+            Hintergrundfarbe
+          </label>
+          <input
+            id="colorPicker"
+            type="color"
+            value={backgroundColor}
+            onChange={(e) => setBackgroundColor(e.target.value)}
+          />
         </div>
       </div>
       <div className="w-3/5">
@@ -138,7 +159,7 @@ function App() {
             height={height}
             rotation={rotation}
             scale={scale}
-            backgroundColor={"#0803AF"}
+            backgroundColor={backgroundColor}
             xGap={xlogoPadding}
             yGap={ylogoPadding}
             xOffset={xOffset}
