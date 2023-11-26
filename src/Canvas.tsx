@@ -36,7 +36,7 @@ export default function Canvas({
   const logo = new Image();
   logo.src = image;
 
-  const base64Image = "";
+  const _scale = scale / 100;
 
   const downloadCanvas = () => {
     const canvas = document.getElementById("mycanvas") as HTMLCanvasElement;
@@ -64,10 +64,10 @@ export default function Canvas({
       for (let j = -10; j < 10; j++) {
         ctx.drawImage(
           logo,
-          i * logo.width + i * cmToPixel(xGap),
-          j * logo.height + j * cmToPixel(yGap),
-          (logo.width * scale) / 100,
-          (logo.height * scale) / 100,
+          i * logo.width * _scale + i * cmToPixel(xGap),
+          j * logo.height * _scale + j * cmToPixel(yGap),
+          logo.width * _scale,
+          logo.height * _scale,
         );
       }
     }
