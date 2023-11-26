@@ -44,8 +44,26 @@ export default function Canvas({
 
   const downloadCanvas = () => {
     const canvas = document.getElementById("mycanvas") as HTMLCanvasElement;
+
+    const croppedCanvas = document.createElement("canvas");
+    const croppedContext = croppedCanvas.getContext("2d");
+
     if (canvas) {
-      const dataUrl = canvas.toDataURL("image/png");
+      croppedCanvas.width = pixelWidth;
+      croppedCanvas.height = pixelHeight;
+      croppedContext?.drawImage(
+        canvas,
+        30,
+        30,
+        pixelHeight - 20,
+        pixelHeight - 20,
+        0,
+        0,
+        pixelWidth,
+        pixelHeight,
+      );
+
+      const dataUrl = croppedCanvas.toDataURL("image/png");
       const link = document.createElement("a");
       link.href = dataUrl;
       link.download = "canvas_image.png";
@@ -80,7 +98,7 @@ export default function Canvas({
     }
     ctx.restore();
 
-    ctx.lineWidth = 20;
+    ctx.lineWidth = 19;
     ctx.strokeStyle = "red";
     ctx.strokeRect(20, 20, pixelWidth, pixelHeight);
 
