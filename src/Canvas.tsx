@@ -15,6 +15,8 @@ export default function Canvas({
   backgroundColor,
   xGap,
   yGap,
+  xOffset,
+  yOffset,
 }: {
   width: number;
   height: number;
@@ -24,6 +26,8 @@ export default function Canvas({
   backgroundColor: string;
   xGap: number;
   yGap: number;
+  xOffset: number;
+  yOffset: number;
 }) {
   const canvasSize = {
     width: 1100,
@@ -60,12 +64,15 @@ export default function Canvas({
     ctx.save(); // Save the current state
     ctx.translate(canvasSize.width / 2, canvasSize.height / 2); // Move the origin to the center
     ctx.rotate((rotation * Math.PI) / 180);
-    for (let i = -10; i < 10; i++) {
-      for (let j = -10; j < 10; j++) {
+    for (let i = -100; i < 100; i++) {
+      for (let j = -100; j < 100; j++) {
         ctx.drawImage(
           logo,
-          i * logo.width * _scale + i * cmToPixel(xGap),
-          j * logo.height * _scale + j * cmToPixel(yGap),
+          i * logo.width * _scale +
+            i * cmToPixel(xGap) +
+            xOffset +
+            (j % 2) * logo.width * 2,
+          j * logo.height * _scale + j * cmToPixel(yGap) + yOffset,
           logo.width * _scale,
           logo.height * _scale,
         );
@@ -91,7 +98,7 @@ export default function Canvas({
     height,
     image,
     rotation,
-    scale,
+    _scale,
     backgroundColor,
     logo,
     pixelHeight,
@@ -100,6 +107,8 @@ export default function Canvas({
     canvasSize.height,
     xGap,
     yGap,
+    xOffset,
+    yOffset,
   ]);
 
   return (

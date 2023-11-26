@@ -10,6 +10,8 @@ function App() {
   const [image, setImage] = useState("");
   const [width, setWidth] = useState(25);
   const [height, setHeight] = useState(25);
+  const [xOffset, setXOffset] = useState(0);
+  const [yOffset, setYOffset] = useState(0);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -43,6 +45,24 @@ function App() {
       min: -180,
       max: 180,
       unit: "°",
+    },
+    {
+      name: "xOffset",
+      description: "X Verschiebung",
+      value: xOffset,
+      setValue: setXOffset,
+      min: -100,
+      max: 100,
+      unit: "px",
+    },
+    {
+      name: "yOffset",
+      description: "Y Verschiebung",
+      value: yOffset,
+      setValue: setYOffset,
+      min: -100,
+      max: 100,
+      unit: "px",
     },
     {
       name: "xLogoPadding",
@@ -121,6 +141,8 @@ function App() {
             backgroundColor={"#0803AF"}
             xGap={xlogoPadding}
             yGap={ylogoPadding}
+            xOffset={xOffset}
+            yOffset={yOffset}
           />
         </div>
       </div>
