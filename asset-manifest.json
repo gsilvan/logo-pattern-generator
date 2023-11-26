@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/logo-pattern-generator/static/css/main.56a9bc3d.css",
+    "main.js": "/logo-pattern-generator/static/js/main.0a146094.js",
+    "static/js/787.18689205.chunk.js": "/logo-pattern-generator/static/js/787.18689205.chunk.js",
+    "index.html": "/logo-pattern-generator/index.html",
+    "main.56a9bc3d.css.map": "/logo-pattern-generator/static/css/main.56a9bc3d.css.map",
+    "main.0a146094.js.map": "/logo-pattern-generator/static/js/main.0a146094.js.map",
+    "787.18689205.chunk.js.map": "/logo-pattern-generator/static/js/787.18689205.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.56a9bc3d.css",
+    "static/js/main.0a146094.js"
+  ]
+}
