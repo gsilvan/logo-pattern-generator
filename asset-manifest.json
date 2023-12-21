@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/logo-pattern-generator/static/css/main.8c2ee2d1.css",
-    "main.js": "/logo-pattern-generator/static/js/main.c87d04a2.js",
+    "main.css": "/logo-pattern-generator/static/css/main.af44d8dd.css",
+    "main.js": "/logo-pattern-generator/static/js/main.8eaf959f.js",
     "static/js/787.18689205.chunk.js": "/logo-pattern-generator/static/js/787.18689205.chunk.js",
     "index.html": "/logo-pattern-generator/index.html",
-    "main.8c2ee2d1.css.map": "/logo-pattern-generator/static/css/main.8c2ee2d1.css.map",
-    "main.c87d04a2.js.map": "/logo-pattern-generator/static/js/main.c87d04a2.js.map",
+    "main.af44d8dd.css.map": "/logo-pattern-generator/static/css/main.af44d8dd.css.map",
+    "main.8eaf959f.js.map": "/logo-pattern-generator/static/js/main.8eaf959f.js.map",
     "787.18689205.chunk.js.map": "/logo-pattern-generator/static/js/787.18689205.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.8c2ee2d1.css",
-    "static/js/main.c87d04a2.js"
+    "static/css/main.af44d8dd.css",
+    "static/js/main.8eaf959f.js"
   ]
 }
