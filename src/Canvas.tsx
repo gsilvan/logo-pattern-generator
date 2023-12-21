@@ -1,6 +1,5 @@
 import React from "react";
-import { useRef, useEffect, useMemo } from "react";
-import { log } from "util";
+import { useRef, useEffect } from "react";
 
 function cmToPixel(cm: number): number {
   return Math.round(28 * cm);
@@ -15,8 +14,7 @@ export default function Canvas({
   backgroundColor,
   xGap,
   yGap,
-  xOffset,
-  yOffset,
+  x2Offset,
 }: {
   width: number;
   height: number;
@@ -26,8 +24,7 @@ export default function Canvas({
   backgroundColor: string;
   xGap: number;
   yGap: number;
-  xOffset: number;
-  yOffset: number;
+  x2Offset: number;
 }) {
   const canvasSize = {
     width: 1100,
@@ -86,11 +83,8 @@ export default function Canvas({
       for (let j = -100; j < 100; j++) {
         ctx.drawImage(
           logo,
-          i * logo.width * _scale +
-            i * cmToPixel(xGap) +
-            xOffset +
-            (j % 2) * logo.width * 2,
-          j * logo.height * _scale + j * cmToPixel(yGap) + yOffset,
+          i * logo.width * _scale + i * cmToPixel(xGap) + (j % 2) * x2Offset,
+          j * logo.height * _scale + j * cmToPixel(yGap),
           logo.width * _scale,
           logo.height * _scale,
         );
@@ -125,8 +119,7 @@ export default function Canvas({
     canvasSize.height,
     xGap,
     yGap,
-    xOffset,
-    yOffset,
+    x2Offset,
   ]);
 
   return (

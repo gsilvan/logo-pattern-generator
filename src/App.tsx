@@ -1,6 +1,31 @@
 import React, { useState } from "react";
 import Canvas from "./Canvas";
 
+function getRandomInt(min: number, max: number): number {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
+}
+
+function getRandomColor() {
+  // Generate random values for red, green, and blue components
+  const r = Math.floor(Math.random() * 256);
+  const g = Math.floor(Math.random() * 256);
+  const b = Math.floor(Math.random() * 256);
+
+  // Convert the decimal values to hexadecimal and format the color string
+  const colorString =
+    "#" +
+    (r < 16 ? "0" : "") +
+    r.toString(16) +
+    (g < 16 ? "0" : "") +
+    g.toString(16) +
+    (b < 16 ? "0" : "") +
+    b.toString(16);
+
+  return colorString;
+}
+
 function App() {
   const [scale, setScale] = useState(100);
   const [rotation, setRotation] = useState(0);
@@ -9,8 +34,7 @@ function App() {
   const [image, setImage] = useState("");
   const [width, setWidth] = useState(25);
   const [height, setHeight] = useState(25);
-  const [xOffset, setXOffset] = useState(0);
-  const [yOffset, setYOffset] = useState(0);
+  const [x2Offset, setX2Offset] = useState(0);
   const [backgroundColor, setBackgroundColor] = useState("#fff");
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,7 +58,7 @@ function App() {
       value: scale,
       setValue: setScale,
       min: 0,
-      max: 100,
+      max: 130,
       unit: "%",
     },
     {
@@ -47,21 +71,12 @@ function App() {
       unit: "°",
     },
     {
-      name: "xOffset",
-      description: "X Verschiebung",
-      value: xOffset,
-      setValue: setXOffset,
-      min: -100,
-      max: 100,
-      unit: "px",
-    },
-    {
-      name: "yOffset",
-      description: "Y Verschiebung",
-      value: yOffset,
-      setValue: setYOffset,
-      min: -100,
-      max: 100,
+      name: "x2Offset",
+      description: "X_2 Verschiebung",
+      value: x2Offset,
+      setValue: setX2Offset,
+      min: -1000,
+      max: 1000,
       unit: "px",
     },
     {
@@ -102,6 +117,15 @@ function App() {
     },
   ];
 
+  function makeRand() {
+    setScale(getRandomInt(30, 80));
+    setRotation(getRandomInt(-45, 45));
+    setX2Offset(getRandomInt(-100, 100));
+    setXLogoPadding(getRandomInt(0, 4));
+    setYLogoPadding(getRandomInt(0, 4));
+    setBackgroundColor(getRandomColor());
+  }
+
   return (
     <div className="flex w-full h-full">
       <div className="w-2/5 h-full">
@@ -121,9 +145,15 @@ function App() {
               min={setting.min}
               max={setting.max}
             />
-            <div className="px-2.5">
-              {setting.value} {setting.unit}
-            </div>
+            <input
+              className="w-12"
+              type="number"
+              value={setting.value}
+              onChange={(e) => setting.setValue(parseInt(e.target.value))}
+              min={setting.min}
+              max={setting.max}
+            />
+            <div className="px-2.5">{setting.unit}</div>
           </div>
         ))}
         <div className="flex">
@@ -149,6 +179,11 @@ function App() {
             onChange={(e) => setBackgroundColor(e.target.value)}
           />
         </div>
+        <div>
+          <a className="btn btn-blue" onClick={makeRand}>
+            Zufall
+          </a>
+        </div>
       </div>
       <div className="w-3/5">
         <div className="w-full">
@@ -161,8 +196,7 @@ function App() {
             backgroundColor={backgroundColor}
             xGap={xlogoPadding}
             yGap={ylogoPadding}
-            xOffset={xOffset}
-            yOffset={yOffset}
+            x2Offset={x2Offset}
           />
         </div>
       </div>
