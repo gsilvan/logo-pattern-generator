@@ -10,7 +10,7 @@ export default function Canvas({
   height,
   image,
   rotation,
-  scale,
+  logoTargetWidth,
   backgroundColor,
   xGap,
   yGap,
@@ -20,7 +20,7 @@ export default function Canvas({
   height: number;
   image: string;
   rotation: number;
-  scale: number;
+  logoTargetWidth: number;
   backgroundColor: string;
   xGap: number;
   yGap: number;
@@ -37,7 +37,7 @@ export default function Canvas({
   const logo = new Image();
   logo.src = image;
 
-  const _scale = scale / 100;
+  const _scale = logoTargetWidth / (logo.width ?? logoTargetWidth);
 
   const downloadCanvas = () => {
     const canvas = document.getElementById("mycanvas") as HTMLCanvasElement;

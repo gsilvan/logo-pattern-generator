@@ -27,7 +27,7 @@ function getRandomColor() {
 }
 
 function App() {
-  const [scale, setScale] = useState(100);
+  const [logoTargetWidth, setLogoTargetWidth] = useState(200);
   const [rotation, setRotation] = useState(0);
   const [xlogoPadding, setXLogoPadding] = useState(2);
   const [ylogoPadding, setYLogoPadding] = useState(2);
@@ -55,11 +55,11 @@ function App() {
     {
       name: "scale",
       description: "Logogröße",
-      value: scale,
-      setValue: setScale,
-      min: 0,
-      max: 130,
-      unit: "%",
+      value: logoTargetWidth,
+      setValue: setLogoTargetWidth,
+      min: 1,
+      max: 1000,
+      unit: "px",
     },
     {
       name: "rotation",
@@ -118,11 +118,11 @@ function App() {
   ];
 
   function makeRand() {
-    setScale(getRandomInt(30, 80));
+    setLogoTargetWidth(getRandomInt(100, 500));
     setRotation(getRandomInt(-45, 45));
     setX2Offset(getRandomInt(-100, 100));
-    setXLogoPadding(getRandomInt(0, 4));
-    setYLogoPadding(getRandomInt(0, 4));
+    setXLogoPadding(getRandomInt(0, 6));
+    setYLogoPadding(getRandomInt(0, 6));
     setBackgroundColor(getRandomColor());
   }
 
@@ -192,7 +192,7 @@ function App() {
             width={width}
             height={height}
             rotation={rotation}
-            scale={scale}
+            logoTargetWidth={logoTargetWidth}
             backgroundColor={backgroundColor}
             xGap={xlogoPadding}
             yGap={ylogoPadding}
