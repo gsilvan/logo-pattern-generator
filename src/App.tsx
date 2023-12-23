@@ -131,7 +131,7 @@ function App() {
       <div>
         <span className="text-xl font-bold py-4">Muster Generator</span>
         {settings.map((setting) => (
-          <div className="flex">
+          <div className="flex" key={setting.name}>
             <div className="w-32">
               <label htmlFor={setting.name}>{setting.description}</label>
             </div>
