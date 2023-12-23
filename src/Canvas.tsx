@@ -122,6 +122,7 @@ export default function Canvas({
     _scale,
     backgroundColor,
     logo,
+    logo.src,
     pixelHeight,
     pixelWidth,
     canvasSize.width,
