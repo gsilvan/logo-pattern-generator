@@ -127,8 +127,9 @@ function App() {
   }
 
   return (
-    <div className="flex w-full h-full">
-      <div className="w-2/5 h-full">
+    <div className="flex flex-wrap flex-row p-4">
+      <div>
+        <span className="text-xl font-bold py-4">Muster Generator</span>
         {settings.map((setting) => (
           <div className="flex">
             <div className="w-32">
@@ -156,6 +157,7 @@ function App() {
             <div className="px-2.5">{setting.unit}</div>
           </div>
         ))}
+
         <div className="flex">
           <label className="w-32" htmlFor="selectFile">
             Logo einfügen
@@ -185,7 +187,7 @@ function App() {
           </a>
         </div>
       </div>
-      <div className="w-3/5">
+      <div>
         <div className="w-full">
           <Canvas
             image={image}
