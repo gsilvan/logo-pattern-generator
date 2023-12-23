@@ -39,7 +39,7 @@ export default function Canvas({
 
   const _scale = logoTargetWidth / (logo.width ?? logoTargetWidth);
 
-  const downloadCanvas = () => {
+  const downloadCroppedCanvas = () => {
     const canvas = document.getElementById("mycanvas") as HTMLCanvasElement;
 
     const croppedCanvas = document.createElement("canvas");
@@ -67,6 +67,15 @@ export default function Canvas({
       link.click();
     }
   };
+
+  function downloadCanvas() {
+    const canvas = document.getElementById("mycanvas") as HTMLCanvasElement;
+    const dataUrl = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = "preview.png";
+    link.click();
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -130,7 +139,16 @@ export default function Canvas({
         width={canvasSize.width}
         height={canvasSize.height}
       />
-      <button onClick={downloadCanvas}>Download PNG</button>
+      <div className="fixed right-14 bottom-5">
+        <div className="flex gap-3">
+          <button className="font-bold" onClick={downloadCanvas}>
+            Download Preview
+          </button>
+          <button className="font-bold" onClick={downloadCroppedCanvas}>
+            Download PNG
+          </button>
+        </div>
+      </div>
     </>
   );
 }
