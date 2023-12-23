@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/logo-pattern-generator/static/css/main.7b6924b6.css",
-    "main.js": "/logo-pattern-generator/static/js/main.597a5e26.js",
+    "main.js": "/logo-pattern-generator/static/js/main.ade68a7d.js",
     "index.html": "/logo-pattern-generator/index.html",
     "main.7b6924b6.css.map": "/logo-pattern-generator/static/css/main.7b6924b6.css.map",
-    "main.597a5e26.js.map": "/logo-pattern-generator/static/js/main.597a5e26.js.map"
+    "main.ade68a7d.js.map": "/logo-pattern-generator/static/js/main.ade68a7d.js.map"
   },
   "entrypoints": [
     "static/css/main.7b6924b6.css",
-    "static/js/main.597a5e26.js"
+    "static/js/main.ade68a7d.js"
   ]
 }
