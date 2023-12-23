@@ -27,8 +27,8 @@ export default function Canvas({
   x2Offset: number;
 }) {
   const canvasSize = {
-    width: 1100,
-    height: 1100,
+    width: 1025,
+    height: 1025,
   };
   const pixelWidth = cmToPixel(width);
   const pixelHeight = cmToPixel(height);
