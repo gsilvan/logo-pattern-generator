@@ -1,7 +1,7 @@
 {
   "name": "logo-pattern-generator",
   "version": "0.1.0",
-  "homepage": "https://gsilvan.github.io/logo-pattern-generator",
+  "homepage": "https://musterersteller.de/",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
