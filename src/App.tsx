@@ -118,11 +118,11 @@ function App() {
   ];
 
   function makeRand() {
-    setLogoTargetWidth(getRandomInt(100, 500));
+    setLogoTargetWidth(getRandomInt(100, 1000));
     setRotation(getRandomInt(-45, 45));
     setX2Offset(getRandomInt(-100, 100));
-    setXLogoPadding(getRandomInt(0, 6));
-    setYLogoPadding(getRandomInt(0, 6));
+    setXLogoPadding(getRandomInt(0, 200));
+    setYLogoPadding(getRandomInt(0, 200));
     setBackgroundColor(getRandomColor());
   }
 
