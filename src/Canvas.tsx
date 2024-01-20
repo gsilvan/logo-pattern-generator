@@ -37,35 +37,6 @@ export default function Canvas({
 
   const _scale = logoTargetWidth / (logo.width ?? logoTargetWidth);
 
-  const downloadCroppedCanvas = () => {
-    const canvas = document.getElementById("mycanvas") as HTMLCanvasElement;
-
-    const croppedCanvas = document.createElement("canvas");
-    const croppedContext = croppedCanvas.getContext("2d");
-
-    if (canvas) {
-      croppedCanvas.width = canvasSize.width;
-      croppedCanvas.height = canvasSize.height;
-      croppedContext?.drawImage(
-        canvas,
-        30,
-        30,
-        canvasSize.width - 20,
-        canvasSize.height - 20,
-        0,
-        0,
-        canvasSize.width,
-        canvasSize.height,
-      );
-
-      const dataUrl = croppedCanvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = "canvas_image.png";
-      link.click();
-    }
-  };
-
   function downloadCanvas() {
     const canvas = document.getElementById("mycanvas") as HTMLCanvasElement;
     const dataUrl = canvas.toDataURL("image/png");
@@ -125,10 +96,7 @@ export default function Canvas({
       <div className="fixed right-14 bottom-5">
         <div className="flex gap-3">
           <button className="font-bold" onClick={downloadCanvas}>
-            Download Preview
-          </button>
-          <button className="font-bold" onClick={downloadCroppedCanvas}>
-            Download PNG
+            Download
           </button>
         </div>
       </div>
