@@ -98,20 +98,6 @@ export default function Canvas({
       }
     }
     ctx.restore();
-
-    ctx.lineWidth = 19;
-    ctx.strokeStyle = "red";
-    ctx.strokeRect(0, 0, canvasSize.width, canvasSize.height);
-
-    ctx.fillStyle = "#000";
-
-    ctx.font = "24px Mono";
-    ctx.fillStyle = "#fff";
-    ctx.fillText(
-      `${width} cm x ${height} cm`,
-      canvasSize.width - 250,
-      canvasSize.height + 28,
-    );
   }, [
     width,
     height,
