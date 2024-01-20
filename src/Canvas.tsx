@@ -1,5 +1,6 @@
 import React from "react";
 import { useRef, useEffect } from "react";
+import jsPDF from "jspdf";
 
 function cmToPixel(cm: number): number {
   return Math.round(118 * cm);
@@ -44,6 +45,33 @@ export default function Canvas({
     link.href = dataUrl;
     link.download = "preview.png";
     link.click();
+  }
+
+  function downloadCanvasAsPdf() {
+    if (canvasRef.current) {
+      const canvas = document.getElementById("mycanvas") as HTMLCanvasElement;
+      const imgData = canvas.toDataURL("image/png");
+
+      // Create a PDF document
+      const pdf = new jsPDF({
+        unit: "px",
+        format: [canvas.width, canvas.height],
+      });
+
+      pdf.addImage(
+        imgData,
+        "PNG",
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+        undefined,
+        "SLOW",
+      );
+
+      // Download the PDF
+      pdf.save("export.pdf");
+    }
   }
 
   useEffect(() => {
@@ -95,8 +123,11 @@ export default function Canvas({
       />
       <div className="fixed right-14 bottom-5">
         <div className="flex gap-3">
+          <button className="font-bold" onClick={downloadCanvasAsPdf}>
+            Download PDF
+          </button>
           <button className="font-bold" onClick={downloadCanvas}>
-            Download
+            Download PNG
           </button>
         </div>
       </div>
