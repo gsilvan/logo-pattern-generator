@@ -129,11 +129,11 @@ function App() {
 
   return (
     <>
-      <Draggable handle=".handle">
-        <div className="bg-white w-fit absolute opacity-75 cursor-grabbing hover:opacity-100 px-6 pb-3 rounded">
-          <div className="text-xl font-bold py-4 handle w-full">
+      <Draggable defaultPosition={{ x: 10, y: 100 }} handle=".handle">
+        <div className="bg-white w-fit absolute opacity-75 hover:opacity-100 px-6 pb-3 rounded">
+          <h2 className="w-full text-xl font-bold py-4 handle cursor-grabbing">
             Einstellungen
-          </div>
+          </h2>
           {settings.map((setting) => (
             <div className="flex" key={setting.name}>
               <div className="w-32">
