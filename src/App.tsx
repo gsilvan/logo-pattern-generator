@@ -127,7 +127,7 @@ function App() {
   }
 
   return (
-    <div className="flex flex-wrap flex-row p-4">
+    <div className="flex flex-wrap flex-row">
       <div>
         <span className="text-xl font-bold py-4">Muster Generator</span>
         {settings.map((setting) => (
