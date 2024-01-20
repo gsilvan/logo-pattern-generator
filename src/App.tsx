@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Canvas from "./Canvas";
+import Draggable from "react-draggable";
 
 function getRandomInt(min: number, max: number): number {
   min = Math.ceil(min);
@@ -127,66 +128,70 @@ function App() {
   }
 
   return (
-    <div className="flex flex-wrap flex-row">
-      <div>
-        <span className="text-xl font-bold py-4">Muster Generator</span>
-        {settings.map((setting) => (
-          <div className="flex" key={setting.name}>
-            <div className="w-32">
-              <label htmlFor={setting.name}>{setting.description}</label>
-            </div>
-
-            <input
-              className="w-64"
-              value={setting.value}
-              onChange={(e) => setting.setValue(parseInt(e.target.value))}
-              type="range"
-              id={setting.name}
-              name={setting.name}
-              min={setting.min}
-              max={setting.max}
-            />
-            <input
-              className="w-12"
-              type="number"
-              value={setting.value}
-              onChange={(e) => setting.setValue(parseInt(e.target.value))}
-              min={setting.min}
-              max={setting.max}
-            />
-            <div className="px-2.5">{setting.unit}</div>
+    <>
+      <Draggable handle=".handle">
+        <div className="bg-white w-fit absolute opacity-75 cursor-grabbing hover:opacity-100 px-6 pb-3 rounded">
+          <div className="text-xl font-bold py-4 handle w-full">
+            Einstellungen
           </div>
-        ))}
+          {settings.map((setting) => (
+            <div className="flex" key={setting.name}>
+              <div className="w-32">
+                <label htmlFor={setting.name}>{setting.description}</label>
+              </div>
 
-        <div className="flex">
-          <label className="w-32" htmlFor="selectFile">
-            Logo einfügen
-          </label>
-          <input
-            className="px-2.5"
-            id="selectFile"
-            type="file"
-            onChange={handleImageUpload}
-            accept="image/*"
-          />
+              <input
+                className="w-64"
+                value={setting.value}
+                onChange={(e) => setting.setValue(parseInt(e.target.value))}
+                type="range"
+                id={setting.name}
+                name={setting.name}
+                min={setting.min}
+                max={setting.max}
+              />
+              <input
+                className="w-12"
+                type="number"
+                value={setting.value}
+                onChange={(e) => setting.setValue(parseInt(e.target.value))}
+                min={setting.min}
+                max={setting.max}
+              />
+              <div className="px-2.5">{setting.unit}</div>
+            </div>
+          ))}
+
+          <div className="flex">
+            <label className="w-32" htmlFor="selectFile">
+              Logo einfügen
+            </label>
+            <input
+              className="px-2.5"
+              id="selectFile"
+              type="file"
+              onChange={handleImageUpload}
+              accept="image/*"
+            />
+          </div>
+          <div className="flex">
+            <label className="w-32" htmlFor="colorPicker">
+              Hintergrundfarbe
+            </label>
+            <input
+              id="colorPicker"
+              type="color"
+              value={backgroundColor}
+              onChange={(e) => setBackgroundColor(e.target.value)}
+            />
+          </div>
+          <div>
+            <a className="btn btn-blue" onClick={makeRand}>
+              Zufall
+            </a>
+          </div>
         </div>
-        <div className="flex">
-          <label className="w-32" htmlFor="colorPicker">
-            Hintergrundfarbe
-          </label>
-          <input
-            id="colorPicker"
-            type="color"
-            value={backgroundColor}
-            onChange={(e) => setBackgroundColor(e.target.value)}
-          />
-        </div>
-        <div>
-          <a className="btn btn-blue" onClick={makeRand}>
-            Zufall
-          </a>
-        </div>
-      </div>
+      </Draggable>
       <div>
         <div className="w-full">
           <Canvas
@@ -202,7 +207,7 @@ function App() {
           />
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
