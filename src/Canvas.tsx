@@ -2,7 +2,7 @@ import React from "react";
 import { useRef, useEffect } from "react";
 
 function cmToPixel(cm: number): number {
-  return Math.round(28 * cm);
+  return Math.round(118 * cm);
 }
 
 export default function Canvas({
@@ -27,11 +27,9 @@ export default function Canvas({
   x2Offset: number;
 }) {
   const canvasSize = {
-    width: 1025,
-    height: 1025,
+    width: cmToPixel(width),
+    height: cmToPixel(height),
   };
-  const pixelWidth = cmToPixel(width);
-  const pixelHeight = cmToPixel(height);
   const canvasRef = useRef(null);
 
   const logo = new Image();
@@ -46,18 +44,18 @@ export default function Canvas({
     const croppedContext = croppedCanvas.getContext("2d");
 
     if (canvas) {
-      croppedCanvas.width = pixelWidth;
-      croppedCanvas.height = pixelHeight;
+      croppedCanvas.width = canvasSize.width;
+      croppedCanvas.height = canvasSize.height;
       croppedContext?.drawImage(
         canvas,
         30,
         30,
-        pixelHeight - 20,
-        pixelHeight - 20,
+        canvasSize.width - 20,
+        canvasSize.height - 20,
         0,
         0,
-        pixelWidth,
-        pixelHeight,
+        canvasSize.width,
+        canvasSize.height,
       );
 
       const dataUrl = croppedCanvas.toDataURL("image/png");
@@ -83,7 +81,7 @@ export default function Canvas({
     const ctx = canvas.getContext("2d");
 
     ctx.fillStyle = backgroundColor;
-    ctx.fillRect(0, 0, 1200, 1200);
+    ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
     ctx.save(); // Save the current state
     ctx.translate(canvasSize.width / 2, canvasSize.height / 2); // Move the origin to the center
@@ -103,7 +101,7 @@ export default function Canvas({
 
     ctx.lineWidth = 19;
     ctx.strokeStyle = "red";
-    ctx.strokeRect(20, 20, pixelWidth, pixelHeight);
+    ctx.strokeRect(0, 0, canvasSize.width, canvasSize.height);
 
     ctx.fillStyle = "#000";
 
@@ -111,8 +109,8 @@ export default function Canvas({
     ctx.fillStyle = "#fff";
     ctx.fillText(
       `${width} cm x ${height} cm`,
-      pixelWidth - 250,
-      pixelHeight + 28,
+      canvasSize.width - 250,
+      canvasSize.height + 28,
     );
   }, [
     width,
@@ -123,8 +121,6 @@ export default function Canvas({
     backgroundColor,
     logo,
     logo.src,
-    pixelHeight,
-    pixelWidth,
     canvasSize.width,
     canvasSize.height,
     xGap,
