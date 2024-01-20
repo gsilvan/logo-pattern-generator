@@ -92,8 +92,8 @@ export default function Canvas({
       for (let j = -100; j < 100; j++) {
         ctx.drawImage(
           logo,
-          i * logo.width * _scale + i * cmToPixel(xGap) + (j % 2) * x2Offset,
-          j * logo.height * _scale + j * cmToPixel(yGap),
+          i * logo.width * _scale + i * xGap + (j % 2) * x2Offset,
+          j * logo.height * _scale + j * yGap,
           logo.width * _scale,
           logo.height * _scale,
         );

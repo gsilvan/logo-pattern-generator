@@ -29,8 +29,8 @@ function getRandomColor() {
 function App() {
   const [logoTargetWidth, setLogoTargetWidth] = useState(200);
   const [rotation, setRotation] = useState(0);
-  const [xlogoPadding, setXLogoPadding] = useState(2);
-  const [ylogoPadding, setYLogoPadding] = useState(2);
+  const [xlogoPadding, setXLogoPadding] = useState(0);
+  const [ylogoPadding, setYLogoPadding] = useState(0);
   const [image, setImage] = useState("");
   const [width, setWidth] = useState(25);
   const [height, setHeight] = useState(25);
@@ -84,18 +84,18 @@ function App() {
       description: "X Padding",
       value: xlogoPadding,
       setValue: setXLogoPadding,
-      min: 0,
-      max: 20,
-      unit: "cm",
+      min: -500,
+      max: 500,
+      unit: "px",
     },
     {
       name: "yLogoPadding",
       description: "Y Padding",
       value: ylogoPadding,
       setValue: setYLogoPadding,
-      min: 0,
-      max: 20,
-      unit: "cm",
+      min: -500,
+      max: 500,
+      unit: "px",
     },
     {
       name: "width",
