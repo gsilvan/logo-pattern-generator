@@ -186,9 +186,9 @@ function App() {
             />
           </div>
           <div>
-            <a className="btn btn-blue" onClick={makeRand}>
+            <button className="btn btn-blue" onClick={makeRand}>
               Zufall
-            </a>
+            </button>
           </div>
         </div>
       </Draggable>
