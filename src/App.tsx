@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import Canvas from "./Canvas";
 import Draggable from "react-draggable";
-
+import convertPdfPageToImage from "./pdf";
+import { GlobalWorkerOptions } from "pdfjs-dist";
+GlobalWorkerOptions.workerSrc = process.env.PUBLIC_URL + "/pdf.worker.mjs";
 function getRandomInt(min: number, max: number): number {
   min = Math.ceil(min);
   max = Math.floor(max);
@@ -27,6 +29,22 @@ function getRandomColor() {
   return colorString;
 }
 
+const readFileAsDataURL = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      resolve(reader.result as string);
+    };
+
+    reader.onerror = (error) => {
+      reject(error);
+    };
+
+    reader.readAsDataURL(file);
+  });
+};
+
 function App() {
   const [logoTargetWidth, setLogoTargetWidth] = useState(200);
   const [rotation, setRotation] = useState(0);
@@ -37,18 +55,26 @@ function App() {
   const [height, setHeight] = useState(25);
   const [x2Offset, setX2Offset] = useState(0);
   const [backgroundColor, setBackgroundColor] = useState("#fff");
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (file) {
-      const reader = new FileReader();
-
-      reader.onload = (event) => {
-        setImage(event.target?.result as string);
-      };
-
-      reader.readAsDataURL(file);
+      if (file.type === "application/pdf") {
+        console.log(file);
+        try {
+          const imageDataUrl = await convertPdfPageToImage(file, 1, 2);
+          setImage(imageDataUrl);
+        } catch (error) {
+          console.error("Error converting PDF to image:", error);
+        }
+      } else {
+        try {
+          const imageDataUrl = await readFileAsDataURL(file);
+          setImage(imageDataUrl);
+        } catch (error) {
+          console.error("Error reading file:", error);
+        }
+      }
     }
   };
 
@@ -171,7 +197,7 @@ function App() {
               id="selectFile"
               type="file"
               onChange={handleImageUpload}
-              accept="image/*"
+              accept="image/*, application/pdf"
             />
           </div>
           <div className="flex">
