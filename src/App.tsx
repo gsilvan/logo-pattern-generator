@@ -3,6 +3,8 @@ import Canvas from "./Canvas";
 import Draggable from "react-draggable";
 import convertPdfPageToImage from "./pdf";
 import { GlobalWorkerOptions } from "pdfjs-dist";
+import { ImageSelector } from "./image-selector";
+
 GlobalWorkerOptions.workerSrc = process.env.PUBLIC_URL + "/pdf.worker.mjs";
 function getRandomInt(min: number, max: number): number {
   min = Math.ceil(min);
@@ -55,6 +57,8 @@ function App() {
   const [height, setHeight] = useState(25);
   const [x2Offset, setX2Offset] = useState(0);
   const [backgroundColor, setBackgroundColor] = useState("#fff");
+  const [selectedImage, setSelectedImage] = useState("");
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
@@ -153,6 +157,16 @@ function App() {
     setBackgroundColor(getRandomColor());
   }
 
+  const img1 = require("./backgrounds/Design_01.png");
+  const img2 = require("./backgrounds/Design_02.png");
+  const img6 = require("./backgrounds/Design_06.png");
+  const img7 = require("./backgrounds/Design_07.png");
+  const img8 = require("./backgrounds/Design_08.png");
+  const img11 = require("./backgrounds/Design_11.png");
+  const img13 = require("./backgrounds/Design_13.png");
+  const img14 = require("./backgrounds/Design_14.png");
+  const images = [img1, img2, img6, img7, img8, img11, img13, img14];
+
   return (
     <>
       <Draggable defaultPosition={{ x: 10, y: 100 }} handle=".handle">
@@ -211,6 +225,13 @@ function App() {
               onChange={(e) => setBackgroundColor(e.target.value)}
             />
           </div>
+          <div className="max-w-xl py-2.5">
+            <ImageSelector
+              images={images}
+              selectedImage={selectedImage}
+              setSelectedImage={setSelectedImage}
+            />
+          </div>
           <div>
             <button
               className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
@@ -233,6 +254,7 @@ function App() {
             xGap={xlogoPadding}
             yGap={ylogoPadding}
             x2Offset={x2Offset}
+            backgroundImage={selectedImage ? selectedImage : undefined}
           />
         </div>
       </div>

@@ -16,6 +16,7 @@ export default function Canvas({
   xGap,
   yGap,
   x2Offset,
+  backgroundImage,
 }: {
   width: number;
   height: number;
@@ -26,6 +27,7 @@ export default function Canvas({
   xGap: number;
   yGap: number;
   x2Offset: number;
+  backgroundImage: string | undefined;
 }) {
   const canvasSize = {
     width: cmToPixel(width),
@@ -35,6 +37,10 @@ export default function Canvas({
 
   const logo = new Image();
   logo.src = image;
+  const _backgroundImage = new Image();
+  if (typeof backgroundImage === "string") {
+    _backgroundImage.src = backgroundImage;
+  }
 
   const _scale = logoTargetWidth / (logo.width ?? logoTargetWidth);
 
@@ -75,6 +81,7 @@ export default function Canvas({
   }
 
   useEffect(() => {
+    console.log("use effect");
     const canvas = canvasRef.current;
     // @ts-ignore
     const ctx = canvas.getContext("2d");
@@ -85,6 +92,17 @@ export default function Canvas({
     ctx.save(); // Save the current state
     ctx.translate(canvasSize.width / 2, canvasSize.height / 2); // Move the origin to the center
     ctx.rotate((rotation * Math.PI) / 180);
+    for (let i = -100; i < 100; i++) {
+      for (let j = -100; j < 100; j++) {
+        ctx.drawImage(
+          _backgroundImage,
+          i * _backgroundImage.width,
+          j * _backgroundImage.height,
+          _backgroundImage.width,
+          _backgroundImage.height,
+        );
+      }
+    }
     for (let i = -100; i < 100; i++) {
       for (let j = -100; j < 100; j++) {
         ctx.drawImage(
@@ -106,6 +124,8 @@ export default function Canvas({
     backgroundColor,
     logo,
     logo.src,
+    _backgroundImage,
+    _backgroundImage.src,
     canvasSize.width,
     canvasSize.height,
     xGap,
