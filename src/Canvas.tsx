@@ -33,7 +33,8 @@ export default function Canvas({
     width: cmToPixel(width),
     height: cmToPixel(height),
   };
-  const canvasRef = useRef(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const logo = new Image();
   logo.src = image;
@@ -81,40 +82,53 @@ export default function Canvas({
   }
 
   useEffect(() => {
-    console.log("use effect");
-    const canvas = canvasRef.current;
-    // @ts-ignore
-    const ctx = canvas.getContext("2d");
+    if (previewCanvasRef.current && canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d");
+      const previewCtx = previewCanvasRef.current.getContext("2d");
+      if (ctx && previewCtx) {
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
-    ctx.fillStyle = backgroundColor;
-    ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+        ctx.save(); // Save the current state
+        ctx.translate(canvasSize.width / 2, canvasSize.height / 2); // Move the origin to the center
+        ctx.rotate((rotation * Math.PI) / 180);
+        for (let i = -100; i < 100; i++) {
+          for (let j = -100; j < 100; j++) {
+            ctx.drawImage(
+              _backgroundImage,
+              i * _backgroundImage.width,
+              j * _backgroundImage.height,
+              _backgroundImage.width,
+              _backgroundImage.height,
+            );
+          }
+        }
+        for (let i = -100; i < 100; i++) {
+          for (let j = -100; j < 100; j++) {
+            ctx.drawImage(
+              logo,
+              i * logo.width * _scale + i * xGap + (j % 2) * x2Offset,
+              j * logo.height * _scale + j * yGap,
+              logo.width * _scale,
+              logo.height * _scale,
+            );
+          }
+        }
+        ctx.restore();
 
-    ctx.save(); // Save the current state
-    ctx.translate(canvasSize.width / 2, canvasSize.height / 2); // Move the origin to the center
-    ctx.rotate((rotation * Math.PI) / 180);
-    for (let i = -100; i < 100; i++) {
-      for (let j = -100; j < 100; j++) {
-        ctx.drawImage(
-          _backgroundImage,
-          i * _backgroundImage.width,
-          j * _backgroundImage.height,
-          _backgroundImage.width,
-          _backgroundImage.height,
-        );
+        const scaleFactor = 0.24;
+        const scaledWidth = canvasRef.current.width * scaleFactor;
+        const scaledHeight = canvasRef.current.height * scaleFactor;
+
+        // Set preview canvas size
+        previewCanvasRef.current.width = scaledWidth;
+        previewCanvasRef.current.height = scaledHeight;
+
+        // Scale and draw the original canvas content on the preview canvas
+        previewCtx.scale(scaleFactor, scaleFactor);
+        previewCtx.drawImage(canvasRef.current, 0, 0);
       }
     }
-    for (let i = -100; i < 100; i++) {
-      for (let j = -100; j < 100; j++) {
-        ctx.drawImage(
-          logo,
-          i * logo.width * _scale + i * xGap + (j % 2) * x2Offset,
-          j * logo.height * _scale + j * yGap,
-          logo.width * _scale,
-          logo.height * _scale,
-        );
-      }
-    }
-    ctx.restore();
   }, [
     width,
     height,
@@ -136,10 +150,17 @@ export default function Canvas({
   return (
     <>
       <canvas
+        className="hidden"
         id="mycanvas"
         ref={canvasRef}
         width={canvasSize.width}
         height={canvasSize.height}
+      />
+      <canvas
+        id="preview-canvas"
+        ref={previewCanvasRef}
+        width={800}
+        height={600}
       />
       <div className="fixed right-14 bottom-5">
         <div className="flex gap-3">
