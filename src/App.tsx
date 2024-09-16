@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Canvas from "./Canvas";
-import Draggable from "react-draggable";
+import DownloadCanvas from "./Download";
 import convertPdfPageToImage from "./pdf";
 import { GlobalWorkerOptions } from "pdfjs-dist";
 import { ImageSelector } from "./image-selector";
@@ -58,6 +58,8 @@ function App() {
   const [x2Offset, setX2Offset] = useState(0);
   const [backgroundColor, setBackgroundColor] = useState("#fff");
   const [selectedImage, setSelectedImage] = useState("");
+  
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -169,82 +171,62 @@ function App() {
 
   return (
     <>
-      <Draggable defaultPosition={{ x: 10, y: 100 }} handle=".handle">
-        <div className="bg-white w-fit absolute opacity-75 hover:opacity-100 px-6 pb-3 rounded">
-          <h2 className="w-full text-xl font-bold py-4 handle cursor-grabbing">
-            Einstellungen
-          </h2>
-          {settings.map((setting) => (
-            <div className="flex" key={setting.name}>
-              <div className="w-32">
-                <label htmlFor={setting.name}>{setting.description}</label>
-              </div>
-
-              <input
-                className="w-64"
-                value={setting.value}
-                onChange={(e) => setting.setValue(parseInt(e.target.value))}
-                type="range"
-                id={setting.name}
-                name={setting.name}
-                min={setting.min}
-                max={setting.max}
-              />
-              <input
-                className="w-12"
-                type="number"
-                value={setting.value}
-                onChange={(e) => setting.setValue(parseInt(e.target.value))}
-                min={setting.min}
-                max={setting.max}
-              />
-              <div className="px-2.5">{setting.unit}</div>
+    <section className="title">
+      <h1>Musterersteller</h1>
+    </section>
+    <section className="upload">
+      <h2>Datei hochladen</h2>
+        <div className="flex">
+          <label className="w-32" htmlFor="selectFile">
+          Logo einfügen
+          </label>
+          <input
+          className="px-2.5"
+          id="selectFile"
+          type="file"
+          onChange={handleImageUpload}
+          accept="image/*, application/pdf"
+          />
+      </div>
+    </section>
+      <section className="interfase">
+        <div className="flex">
+          <div className="einstellungen">
+            <div className="bg-white">
+              <h2 className="text-xl font-bold">
+                Einstellungen
+              </h2>
+              {settings.map((setting) => (
+                <div className="flex" key={setting.name}>
+                  <div className="w-32">
+                    <label htmlFor={setting.name}>{setting.description}</label>
+                  </div>
+    
+                  <input
+                    className="w-64"
+                    value={setting.value}
+                    onChange={(e) => setting.setValue(parseInt(e.target.value))}
+                    type="range"
+                    id={setting.name}
+                    name={setting.name}
+                    min={setting.min}
+                    max={setting.max}
+                  />
+                  <input
+                    className="w-12"
+                    type="number"
+                    value={setting.value}
+                    onChange={(e) => setting.setValue(parseInt(e.target.value))}
+                    min={setting.min}
+                    max={setting.max}
+                  />
+                  <div className="px-2.5">{setting.unit}</div>
+                </div>
+              ))}
             </div>
-          ))}
-
-          <div className="flex">
-            <label className="w-32" htmlFor="selectFile">
-              Logo einfügen
-            </label>
-            <input
-              className="px-2.5"
-              id="selectFile"
-              type="file"
-              onChange={handleImageUpload}
-              accept="image/*, application/pdf"
-            />
-          </div>
-          <div className="flex">
-            <label className="w-32" htmlFor="colorPicker">
-              Hintergrundfarbe
-            </label>
-            <input
-              id="colorPicker"
-              type="color"
-              value={backgroundColor}
-              onChange={(e) => setBackgroundColor(e.target.value)}
-            />
-          </div>
-          <div className="max-w-xl py-2.5">
-            <ImageSelector
-              images={images}
-              selectedImage={selectedImage}
-              setSelectedImage={setSelectedImage}
-            />
           </div>
           <div>
-            <button
-              className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
-              onClick={makeRand}
-            >
-              Zufall
-            </button>
-          </div>
-        </div>
-      </Draggable>
-      <div>
-        <div className="w-full">
-          <Canvas
+            <Canvas
             image={image}
             width={width}
             height={height}
@@ -255,9 +237,39 @@ function App() {
             yGap={ylogoPadding}
             x2Offset={x2Offset}
             backgroundImage={selectedImage ? selectedImage : undefined}
-          />
+            canvasRef={canvasRef}/>
+            <div className="w-full">
+              <div className="flex">
+                <label className="w-32" htmlFor="colorPicker">
+                  Hintergrundfarbe
+                </label>
+                <input
+                  id="colorPicker"
+                  type="color"
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                />
+              </div>
+              <div className="max-w-xl py-2.5">
+                <ImageSelector
+                  images={images}
+                  selectedImage={selectedImage}
+                  setSelectedImage={setSelectedImage}
+                />
+              </div>
+              <div>
+                <button
+                  className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
+                  onClick={makeRand}
+                >
+                  Zufall
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+        <DownloadCanvas canvasRef={canvasRef}/>
+      </section>
     </>
   );
 }

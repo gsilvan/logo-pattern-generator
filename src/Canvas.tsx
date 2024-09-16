@@ -7,6 +7,7 @@ function cmToPixel(cm: number): number {
 }
 
 export default function Canvas({
+  canvasRef,
   width,
   height,
   image,
@@ -18,6 +19,7 @@ export default function Canvas({
   x2Offset,
   backgroundImage,
 }: {
+  canvasRef: React.RefObject<HTMLCanvasElement>;
   width: number;
   height: number;
   image: string;
@@ -33,7 +35,6 @@ export default function Canvas({
     width: cmToPixel(width),
     height: cmToPixel(height),
   };
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const logo = new Image();
@@ -45,41 +46,41 @@ export default function Canvas({
 
   const _scale = logoTargetWidth / (logo.width ?? logoTargetWidth);
 
-  function downloadCanvas() {
-    const canvas = document.getElementById("mycanvas") as HTMLCanvasElement;
-    const dataUrl = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = "preview.png";
-    link.click();
-  }
+  // function downloadCanvas() {
+  //   const canvas = document.getElementById("mycanvas") as HTMLCanvasElement;
+  //   const dataUrl = canvas.toDataURL("image/png");
+  //   const link = document.createElement("a");
+  //   link.href = dataUrl;
+  //   link.download = "preview.png";
+  //   link.click();
+  // }
 
-  function downloadCanvasAsPdf() {
-    if (canvasRef.current) {
-      const canvas = document.getElementById("mycanvas") as HTMLCanvasElement;
-      const imgData = canvas.toDataURL("image/png");
+  // function downloadCanvasAsPdf() {
+  //   if (canvasRef.current) {
+  //     const canvas = document.getElementById("mycanvas") as HTMLCanvasElement;
+  //     const imgData = canvas.toDataURL("image/png");
 
-      // Create a PDF document
-      const pdf = new jsPDF({
-        unit: "px",
-        format: [canvas.width, canvas.height],
-      });
+  //     // Create a PDF document
+  //     const pdf = new jsPDF({
+  //       unit: "px",
+  //       format: [canvas.width, canvas.height],
+  //     });
 
-      pdf.addImage(
-        imgData,
-        "PNG",
-        0,
-        0,
-        canvas.width,
-        canvas.height,
-        undefined,
-        "SLOW",
-      );
+  //     pdf.addImage(
+  //       imgData,
+  //       "PNG",
+  //       0,
+  //       0,
+  //       canvas.width,
+  //       canvas.height,
+  //       undefined,
+  //       "SLOW",
+  //     );
 
-      // Download the PDF
-      pdf.save("export.pdf");
-    }
-  }
+  //     // Download the PDF
+  //     pdf.save("export.pdf");
+  //   }
+  // }
 
   useEffect(() => {
     if (previewCanvasRef.current && canvasRef.current) {
@@ -162,7 +163,7 @@ export default function Canvas({
         width={800}
         height={600}
       />
-      <div className="fixed right-14 bottom-5">
+      {/* <div className="fixed right-14 bottom-5">
         <div className="flex gap-3">
           <button
             className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
@@ -177,7 +178,7 @@ export default function Canvas({
             Download PNG
           </button>
         </div>
-      </div>
+      </div> */}
     </>
   );
 }
