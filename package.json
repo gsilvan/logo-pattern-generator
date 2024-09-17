@@ -1,7 +1,7 @@
 {
   "name": "logo-pattern-generator",
   "version": "0.1.0",
-  "homepage": "https://musterersteller.de/",
+  "homepage": "/",
   "private": true,
   "dependencies": {
     "@types/node": "^20.11.5",
