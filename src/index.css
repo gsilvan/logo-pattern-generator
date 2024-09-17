@@ -159,3 +159,27 @@ canvas {
 .image-carousel {
   max-width: 250px;
 }
+
+@media (max-width: 1600px) {
+
+  .interfase-flex {
+    justify-content:center;
+    flex-direction: column-reverse;
+  }
+  canvas {
+    margin: 0 auto;
+  }
+
+  .settings {
+    max-width: 100%;
+    flex-direction: row;
+    justify-content: flex-start;
+    overflow-x: scroll;
+
+  }
+  .setting-group-container {
+    border-right: 1px solid gray;
+    border-bottom: initial;
+  }
+
+}
