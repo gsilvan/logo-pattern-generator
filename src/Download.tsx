@@ -46,8 +46,7 @@ export default function DownloadCanvas({
 
   return (
     <>
-      <div className="fixed right-14 bottom-5">
-        <div className="flex gap-3">
+        <div className="download-btns flex gap-3">
           <button
             className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
             onClick={downloadCanvasAsPdf}
@@ -61,7 +60,6 @@ export default function DownloadCanvas({
             Download PNG
           </button>
         </div>
-      </div>
     </>
   );
 }

@@ -15,9 +15,9 @@ export function ImageSelector({
     }
   }
   return (
-    <div className="w-full">
+    <div className="flex gap-3">
       <div>Hintergrundbild</div>
-      <div className="overflow-x-scroll pb-4">
+      <div className="overflow-x-scroll pb-4 image-carousel">
         <div className="flex gap-3">
           {images.map((image) => (
             <Image
@@ -50,13 +50,13 @@ function Image({
           className={
             "border-4 transition-all duration-300 ease-in-out hover:border-yellow-300 hover:shadow-lg max-w-none"
           }
-          height="100"
+          height="50"
           src={src}
           style={{
             aspectRatio: "100/100",
             objectFit: "cover",
           }}
-          width="100"
+          width="50"
         />
         {selected ? (
           <div className="absolute bottom-0 right-0 bg-green-500 rounded-full p-1">

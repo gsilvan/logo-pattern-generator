@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Virgil';
+  src: url('./fonts/Virgil.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
@@ -9,9 +17,145 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-family: 'Virgil', sans-serif;
+  font-size: 1.15rem;
+
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
+}
+
+h1 {
+  font-size: 1.5rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+  display: inline-block;
+}
+
+.title {
+  display: flex;
+  justify-content: center;
+  padding: 50px 0;
+}
+
+.upload {
+
+  display: flex;
+  justify-content: center;
+  padding: 50px 0;
+  flex-direction: column;
+}
+
+.upload .subtitle {
+  padding: 0;
+  justify-content: center;
+}
+
+.canvas-div-container .subtitle {
+  justify-content: center;
+}
+
+.subtitle {
+  display: flex;
+  padding-bottom: 35px;
+  text-align: center;
+}
+
+
+.logo-upload{
+  display: flex;
+  justify-content: center;
+  text-align: center;
+
+}
+
+.input-btn {
+  display: block;
+  text-align: center;
+}
+
+.input-btn::file-selector-button {
+  display:block;
+  margin: 20px auto;
+}
+
+.interfase {
+  padding: 50px 0;
+}
+
+.interfase-flex {
+  display: flex;
+  justify-content: space-between;
+}
+
+.canvas-div-container {
+  padding-right: 50px;
+}
+
+canvas {
+  padding: 20px;
+  border: 1px solid gray;
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2rem;
+  max-width: 30%;
+  background-color: rgb(243, 241, 241);
+  padding: 50px;
+}
+
+.setting-group-container {
+  padding-bottom: 50px;
+  border-bottom: 1px solid gray;
+}
+
+.setting {
+  display: flex;
+  gap: 10px
+}
+
+.setting-group {
+  display: flex;
+  flex-direction:column;
+  gap: 10px;
+  justify-content: center ;
+}
+
+.color-picker-flex {
+  display: flex;
+  gap: 20px;
+}
+
+.image-selector {
+  margin-top: 20px;
+}
+
+.setting-label {
+  width:13ch;
+}
+
+.range-input {
+  max-width: 10ch;
+}
+.number-input {
+  max-width: 6ch;
+}
+
+.download-btns {
+  display: flex;
+}
+
+.unit {
+  width: 3ch;
+}
+
+.image-carousel {
+  max-width: 250px;
 }

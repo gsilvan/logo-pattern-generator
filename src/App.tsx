@@ -58,7 +58,7 @@ function App() {
   const [x2Offset, setX2Offset] = useState(0);
   const [backgroundColor, setBackgroundColor] = useState("#fff");
   const [selectedImage, setSelectedImage] = useState("");
-  
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,7 +105,7 @@ function App() {
     },
     {
       name: "x2Offset",
-      description: "X_2 Verschiebung",
+      description: "Logo-Versatz",
       value: x2Offset,
       setValue: setX2Offset,
       min: -1000,
@@ -114,7 +114,7 @@ function App() {
     },
     {
       name: "xLogoPadding",
-      description: "X Padding",
+      description: "Logo-Abstand-X",
       value: xlogoPadding,
       setValue: setXLogoPadding,
       min: -500,
@@ -123,7 +123,7 @@ function App() {
     },
     {
       name: "yLogoPadding",
-      description: "Y Padding",
+      description: "Logo-Abstand-Y",
       value: ylogoPadding,
       setValue: setYLogoPadding,
       min: -500,
@@ -171,61 +171,132 @@ function App() {
 
   return (
     <>
-    <section className="title">
+    {/* <section className="title">
       <h1>Musterersteller</h1>
-    </section>
+    </section> */}
     <section className="upload">
-      <h2>Datei hochladen</h2>
-        <div className="flex">
-          <label className="w-32" htmlFor="selectFile">
-          Logo einfügen
-          </label>
-          <input
-          className="px-2.5"
-          id="selectFile"
-          type="file"
-          onChange={handleImageUpload}
-          accept="image/*, application/pdf"
-          />
+      <div className="subtitle">
+        <h3>1. Datei hochladen</h3>
+      </div>
+      <div className="logo-upload">
+        <input
+        className="input-btn"
+        id="selectFile"
+        type="file"
+        onChange={handleImageUpload}
+        accept="image/*, application/pdf"
+        />
       </div>
     </section>
-      <section className="interfase">
-        <div className="flex">
-          <div className="einstellungen">
-            <div className="bg-white">
-              <h2 className="text-xl font-bold">
-                Einstellungen
-              </h2>
-              {settings.map((setting) => (
-                <div className="flex" key={setting.name}>
-                  <div className="w-32">
-                    <label htmlFor={setting.name}>{setting.description}</label>
-                  </div>
-    
+    <section className="interfase">
+      <div className="interfase-flex">
+        <div className="settings">
+          <div className="setting-group-container">
+            <div className="subtitle">
+              <h3>2. Hintergrund auswählen</h3>
+            </div>      
+            <div className="setting-group background-settings">
+              <div>
+                <div className="color-picker-flex">
+                  <label htmlFor="colorPicker">
+                    Hintergrundfarbe
+                  </label>
                   <input
-                    className="w-64"
-                    value={setting.value}
-                    onChange={(e) => setting.setValue(parseInt(e.target.value))}
-                    type="range"
-                    id={setting.name}
-                    name={setting.name}
-                    min={setting.min}
-                    max={setting.max}
+                    id="colorPicker"
+                    type="color"
+                    value={backgroundColor}
+                    onChange={(e) => setBackgroundColor(e.target.value)}
                   />
-                  <input
-                    className="w-12"
-                    type="number"
-                    value={setting.value}
-                    onChange={(e) => setting.setValue(parseInt(e.target.value))}
-                    min={setting.min}
-                    max={setting.max}
-                  />
-                  <div className="px-2.5">{setting.unit}</div>
-                </div>
-              ))}
+                </div>  
+              </div>
+              <div className="image-selector">
+                <ImageSelector
+                  images={images}
+                  selectedImage={selectedImage}
+                  setSelectedImage={setSelectedImage}
+                />
+              </div>
             </div>
+          </div>   
+              <div className="setting-group-container">
+                <div className="subtitle">
+                  <h3>3. Tuchgröße festlegen</h3>
+                </div>                
+                <div className="setting-group">
+                  {[settings[5],settings[6]].map((setting) => (
+                    <div className="setting" key={setting.name}>
+                      <div className="setting-label">
+                        <label htmlFor={setting.name}>{setting.description}</label>
+                      </div>
+        
+                      <input
+                        className="range-input"
+                        value={setting.value}
+                        onChange={(e) => setting.setValue(parseInt(e.target.value))}
+                        type="range"
+                        id={setting.name}
+                        name={setting.name}
+                        min={setting.min}
+                        max={setting.max}
+                      />
+                      <input
+                        className="number-input"
+                        type="number"
+                        value={setting.value}
+                        onChange={(e) => setting.setValue(parseInt(e.target.value))}
+                        min={setting.min}
+                        max={setting.max}
+                      />
+                      <div className="px-2.5 unit">{setting.unit}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            <div className="setting-group-container">
+              <div className="subtitle">
+                <h3>4. Gestaltung</h3>
+              </div>
+              <div className="setting-group">
+                {settings.slice(0,5).map((setting) => (
+                  <div className="setting" key={setting.name}>
+                    <div className="setting-label">
+                      <label htmlFor={setting.name}>{setting.description}</label>
+                    </div>
+      
+                    <input
+                      className="range-input"
+                      value={setting.value}
+                      onChange={(e) => setting.setValue(parseInt(e.target.value))}
+                      type="range"
+                      id={setting.name}
+                      name={setting.name}
+                      min={setting.min}
+                      max={setting.max}
+                    />
+                    <input
+                      className="number-input"
+                      type="number"
+                      value={setting.value}
+                      onChange={(e) => setting.setValue(parseInt(e.target.value))}
+                      min={setting.min}
+                      max={setting.max}
+                    />
+                    <div className="px-2.5 unit">{setting.unit}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="download-div">
+              <div className="subtitle">
+                <h3>4. Download</h3>
+              </div>
+            <DownloadCanvas canvasRef={canvasRef}/>
+            </div>
+        </div>
+        <div className="canvas-div-container">
+          <div className="subtitle">
+            <h3>Streudruckersteller Design-Vorschau</h3>
           </div>
-          <div>
             <Canvas
             image={image}
             width={width}
@@ -238,38 +309,17 @@ function App() {
             x2Offset={x2Offset}
             backgroundImage={selectedImage ? selectedImage : undefined}
             canvasRef={canvasRef}/>
-            <div className="w-full">
-              <div className="flex">
-                <label className="w-32" htmlFor="colorPicker">
-                  Hintergrundfarbe
-                </label>
-                <input
-                  id="colorPicker"
-                  type="color"
-                  value={backgroundColor}
-                  onChange={(e) => setBackgroundColor(e.target.value)}
-                />
-              </div>
-              <div className="max-w-xl py-2.5">
-                <ImageSelector
-                  images={images}
-                  selectedImage={selectedImage}
-                  setSelectedImage={setSelectedImage}
-                />
-              </div>
-              <div>
-                <button
-                  className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
-                  onClick={makeRand}
-                >
-                  Zufall
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
-        <DownloadCanvas canvasRef={canvasRef}/>
-      </section>
+      </div>
+      <div>
+      <button
+        className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
+        onClick={makeRand}
+      >
+        Zufall
+      </button>
+    </div>               
+    </section>
     </>
   );
 }
