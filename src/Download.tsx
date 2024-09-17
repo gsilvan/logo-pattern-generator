@@ -1,5 +1,4 @@
 import React from "react";
-import { useRef } from "react";
 import jsPDF from "jspdf";
 
 export default function DownloadCanvas({

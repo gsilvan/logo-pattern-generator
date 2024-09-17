@@ -1,6 +1,5 @@
 import React from "react";
 import { useRef, useEffect } from "react";
-import jsPDF from "jspdf";
 
 function cmToPixel(cm: number): number {
   return Math.round(118 * cm);
@@ -95,6 +94,7 @@ export default function Canvas({
       }
     }
   }, [
+    canvasRef,
     width,
     height,
     image,
