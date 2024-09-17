@@ -1,5 +1,5 @@
 import React from "react";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
 
 function cmToPixel(cm: number): number {
   return Math.round(118 * cm);
@@ -36,12 +36,22 @@ export default function Canvas({
   };
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  const logo = new Image();
-  logo.src = image;
-  const _backgroundImage = new Image();
-  if (typeof backgroundImage === "string") {
-    _backgroundImage.src = backgroundImage;
-  }
+  // Memoize the logo image to prevent it from being recreated on every render
+  const logo = useMemo(() => {
+    const img = new Image();
+    img.src = image;
+    return img;
+  }, [image]);
+
+  // Memoize the background image to prevent it from being recreated on every render
+  const _backgroundImage = useMemo(() => {
+    const img = new Image();
+    if (typeof backgroundImage === "string") {
+      img.src = backgroundImage;
+    }
+    return img;
+  }, [backgroundImage]);
+
 
   const _scale = logoTargetWidth / (logo.width ?? logoTargetWidth);
 
