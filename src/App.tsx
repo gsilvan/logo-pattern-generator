@@ -174,23 +174,23 @@ function App() {
     {/* <section className="title">
       <h1>Musterersteller</h1>
     </section> */}
-    <section className="upload">
-      <div className="subtitle">
-        <h3>1. Datei hochladen</h3>
-      </div>
-      <div className="logo-upload">
-        <input
-        className="input-btn"
-        id="selectFile"
-        type="file"
-        onChange={handleImageUpload}
-        accept="image/*, application/pdf"
-        />
-      </div>
-    </section>
     <section className="interfase">
       <div className="interfase-flex">
         <div className="settings">
+         <div className="setting-group-container">
+            <div className="subtitle">
+              <h3>1. Datei hochladen</h3>
+            </div>
+            <div className="logo-upload">
+              <input
+              className="input-btn"
+              id="selectFile"
+              type="file"
+              onChange={handleImageUpload}
+              accept="image/*, application/pdf"
+              />
+            </div>
+         </div>
           <div className="setting-group-container">
             <div className="subtitle">
               <h3>2. Hintergrund auswählen</h3>

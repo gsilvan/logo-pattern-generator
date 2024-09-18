@@ -79,8 +79,8 @@ h3 {
 }
 
 .input-btn::file-selector-button {
-  display:block;
-  margin: 20px auto;
+  display:inline-block;
+  margin-right: 8px;
 }
 
 .interfase {
@@ -97,7 +97,7 @@ h3 {
 }
 
 canvas {
-  padding: 20px;
+  padding: 5px;
   border: 1px solid gray;
 }
 
@@ -138,14 +138,14 @@ canvas {
 }
 
 .setting-label {
-  width:13ch;
+  min-width:13ch;
 }
 
 .range-input {
   max-width: 10ch;
 }
 .number-input {
-  max-width: 6ch;
+  min-width: 5ch;
 }
 
 .download-btns {
