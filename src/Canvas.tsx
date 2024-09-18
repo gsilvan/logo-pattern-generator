@@ -55,6 +55,27 @@ export default function Canvas({
 
   const _scale = logoTargetWidth / (logo.width ?? logoTargetWidth);
 
+  const screenWidth = window.screen.width;
+  const screenHeight = window.screen.height
+  let scaleFactor = 0.24
+  // Responsive scale factor for canvas preview
+  if (screenWidth > 900) {
+    const canvasPrevDesktopWidth = screenHeight * 0.67;
+    scaleFactor =  canvasPrevDesktopWidth / 4130;
+  } else {
+    const canvasPrevDesktopWidth = screenWidth * 0.98;
+    scaleFactor =  canvasPrevDesktopWidth / 4130;
+  }
+
+  //coordinate system size
+  const coordSystemSize = 4130 * scaleFactor;
+
+  const coordinateSystemDivStyle = {
+    height: `${coordSystemSize}px`,
+    width: `${coordSystemSize}px`,
+  };
+
+
   useEffect(() => {
     if (previewCanvasRef.current && canvasRef.current) {
       const ctx = canvasRef.current.getContext("2d");
@@ -89,10 +110,10 @@ export default function Canvas({
           }
         }
         ctx.restore();
+        
 
-        const scaleFactor = 0.24;
         const scaledWidth = canvasRef.current.width * scaleFactor;
-        const scaledHeight = canvasRef.current.height * scaleFactor;
+        const scaledHeight = canvasRef.current.height * scaleFactor;      
 
         // Set preview canvas size
         previewCanvasRef.current.width = scaledWidth;
@@ -104,6 +125,7 @@ export default function Canvas({
       }
     }
   }, [
+    
     canvasRef,
     width,
     height,
@@ -131,12 +153,16 @@ export default function Canvas({
         width={canvasSize.width}
         height={canvasSize.height}
       />
-      <canvas
-        id="preview-canvas"
-        ref={previewCanvasRef}
-        width={800}
-        height={600}
-      />
+      <div className="coordinate-system" style={coordinateSystemDivStyle}>
+        <span className="y-label">35cm</span>
+        <span className="x-label">35cm</span>
+        <canvas
+          id="preview-canvas"
+          ref={previewCanvasRef}
+          width={800}
+          height={600}
+        />
+      </div>
     </>
   );
 }

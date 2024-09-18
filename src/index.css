@@ -36,12 +36,6 @@ h3 {
   display: inline-block;
 }
 
-.title {
-  display: flex;
-  justify-content: center;
-  padding: 50px 0;
-}
-
 .upload {
 
   display: flex;
@@ -89,7 +83,7 @@ h3 {
 
 .interfase-flex {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
 }
 
 .canvas-div-container {
@@ -97,8 +91,10 @@ h3 {
 }
 
 canvas {
-  padding: 5px;
-  border: 1px solid gray;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: 0 0 4px 4px;
 }
 
 .settings {
@@ -106,7 +102,7 @@ canvas {
   flex-direction: column;
   justify-content: center;
   gap: 2rem;
-  max-width: 30%;
+  width: 33%;
   background-color: rgb(243, 241, 241);
   padding: 50px;
 }
@@ -142,10 +138,10 @@ canvas {
 }
 
 .range-input {
-  max-width: 10ch;
+  width: 50%;
 }
 .number-input {
-  min-width: 5ch;
+  width: 5ch;
 }
 
 .download-btns {
@@ -153,33 +149,112 @@ canvas {
 }
 
 .unit {
-  width: 3ch;
+  width: 5ch;
 }
 
 .image-carousel {
   max-width: 250px;
 }
 
-@media (max-width: 1600px) {
+.coordinate-system {
+border-left: 2px solid black;
+border-bottom: 2px solid black;
+position:relative;
+}
+
+ /* Upward arrow (top of left border) */
+ .coordinate-system::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: -7px;
+  border: 6px solid transparent;
+  border-bottom: 8px solid black; 
+  transform: rotate(0deg); 
+}
+
+/* Rightward arrow (right of bottom border) */
+.coordinate-system::after {
+  content: '';
+  position: absolute;
+  bottom: -7px;
+  right: -14px;
+  border: 6px solid transparent;
+  border-left: 8px solid black; 
+  transform: rotate(0deg); 
+}
+
+ /* Label for the top-left arrow */
+ .coordinate-system .y-label {
+  position: absolute;
+  top: -20px;
+  left: -45px;
+  font-size: 14px;
+}
+
+/* Label for the bottom-right arrow */
+.coordinate-system .x-label {
+  position: absolute;
+  bottom: -30px;
+  right: -30px;
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+
+  .interfase {
+    padding-top: 10px;
+    padding-bottom: 0;
+  }
 
   .interfase-flex {
     justify-content:center;
     flex-direction: column-reverse;
   }
+
+  .canvas-div-container {
+    padding: initial;
+    flex-direction: column;
+    display: flex;
+    justify-content: center;
+  }
+
   canvas {
     margin: 0 auto;
   }
 
+  .canvas-div-container .subtitle {
+    padding: 0;
+    font-size: 1rem;
+  }
+
   .settings {
-    max-width: 100%;
+    width: 100%;
     flex-direction: row;
     justify-content: flex-start;
     overflow-x: scroll;
-
+    padding: initial, initial, initial, 1rem;
+    gap: 1rem;
   }
   .setting-group-container {
     border-right: 1px solid gray;
     border-bottom: initial;
+    min-width: 95vw;
+  }
+
+  .input-btn::file-selector-button {
+  
+    display: block;
+  }
+
+  .setting-label  {
+    display: block;
+    min-width: 10ch;
+    max-width: 10ch;
+  }
+
+  .range-input {
+    width: 25%;
   }
 
 }

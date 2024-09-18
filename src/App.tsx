@@ -171,9 +171,6 @@ function App() {
 
   return (
     <>
-    {/* <section className="title">
-      <h1>Musterersteller</h1>
-    </section> */}
     <section className="interfase">
       <div className="interfase-flex">
         <div className="settings">
@@ -286,29 +283,31 @@ function App() {
                 ))}
               </div>
             </div>
-            <div className="download-div">
-              <div className="subtitle">
-                <h3>4. Download</h3>
+            <div className="setting-group-container">
+              <div className="download-div">
+                <div className="subtitle">
+                  <h3>4. Download</h3>
+                </div>
+              <DownloadCanvas canvasRef={canvasRef}/>
               </div>
-            <DownloadCanvas canvasRef={canvasRef}/>
             </div>
         </div>
         <div className="canvas-div-container">
           <div className="subtitle">
             <h3>Streudruckersteller Design-Vorschau</h3>
           </div>
-            <Canvas
-            image={image}
-            width={width}
-            height={height}
-            rotation={rotation}
-            logoTargetWidth={logoTargetWidth}
-            backgroundColor={backgroundColor}
-            xGap={xlogoPadding}
-            yGap={ylogoPadding}
-            x2Offset={x2Offset}
-            backgroundImage={selectedImage ? selectedImage : undefined}
-            canvasRef={canvasRef}/>
+              <Canvas
+              image={image}
+              width={width}
+              height={height}
+              rotation={rotation}
+              logoTargetWidth={logoTargetWidth}
+              backgroundColor={backgroundColor}
+              xGap={xlogoPadding}
+              yGap={ylogoPadding}
+              x2Offset={x2Offset}
+              backgroundImage={selectedImage ? selectedImage : undefined}
+              canvasRef={canvasRef}/>
         </div>
       </div>
       <div>
