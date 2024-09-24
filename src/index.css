@@ -49,6 +49,10 @@ h3 {
   justify-content: center;
 }
 
+.mobileSettingsbuttons {
+  display: none;
+}
+
 .canvas-div-container .subtitle {
   text-align: initial;
   padding-bottom: 70px;
@@ -226,7 +230,12 @@ bottom: 0;
   font-size: 14px;
 }
 
+.not-show {
+  display: none;
+}
+
 @media (max-width: 900px) {
+
 
   .interfase {
     padding-top: 10px;
@@ -238,11 +247,18 @@ bottom: 0;
     flex-direction: column-reverse;
   }
 
+  .coordinate-system-container {
+    display: flex;
+    justify-content: center;
+    position: initial;
+  }
+
   .canvas-div-container {
     padding: initial;
     flex-direction: column;
     display: flex;
     justify-content: center;
+    align-items: center;
   }
 
   canvas {
@@ -252,6 +268,8 @@ bottom: 0;
   .canvas-div-container .subtitle {
     padding: 0;
     font-size: 1rem;
+    text-align: center;
+
   }
 
   .settings {
@@ -259,18 +277,39 @@ bottom: 0;
     flex-direction: row;
     justify-content: flex-start;
     overflow-x: scroll;
-    padding: initial, initial, initial, 1rem;
     gap: 1rem;
+    padding: initial;
+    padding-top: 20px;
+    position:absolute;
+    bottom: 0;
   }
+
+  .mobileSettingsbuttons {
+    width: 100vw;
+    display: flex;
+    justify-content: space-between;
+    position: absolute;
+    top: 10px;
+  }
+
   .setting-group-container {
     border-right: 1px solid gray;
     border-bottom: initial;
     min-width: 95vw;
   }
 
+  .upload-setting-group-container {
+    padding-left: 1rem;
+  }
+
   .input-btn::file-selector-button {
   
     display: block;
+  }
+
+  .coordinate-system .y-label {
+    top: -25px;
+    left: -30px;
   }
 
   .setting-label  {

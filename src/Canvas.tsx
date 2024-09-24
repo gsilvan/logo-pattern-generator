@@ -63,7 +63,7 @@ export default function Canvas({
     const canvasPrevWidth = screenHeight * 0.67;
     scaleFactor =  canvasPrevWidth / 4130;
   } else {
-    const canvasPrevWidth = screenWidth * 0.98;
+    const canvasPrevWidth = screenWidth * 0.85;
     scaleFactor =  canvasPrevWidth / 4130;
   }
 

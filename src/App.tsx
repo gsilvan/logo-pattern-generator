@@ -58,8 +58,26 @@ function App() {
   const [x2Offset, setX2Offset] = useState(0);
   const [backgroundColor, setBackgroundColor] = useState("#fff");
   const [selectedImage, setSelectedImage] = useState("");
+  const [selectedSetting, setSelectedSetting] = useState(1)
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const handleNextClick = () => {
+    setSelectedSetting(selectedSetting + 1);
+    console.log(selectedSetting);
+  }
+  const handleBackClick = () => {
+    setSelectedSetting(selectedSetting - 1);
+    console.log(selectedSetting);
+  }
+
+  const isNotShow1 = window.screen.width < 900 && selectedSetting !== 1;
+  const isNotShow2 = window.screen.width < 900 && selectedSetting !== 2;
+  const isNotShow3 = window.screen.width < 900 && selectedSetting !== 3;
+  const isNotShow4 = window.screen.width < 900 && selectedSetting !== 4;
+  const isNotShow5 = window.screen.width < 900 && selectedSetting !== 5;
+
+
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -305,7 +323,12 @@ function App() {
     <section className="interfase">
       <div className="interfase-flex">
         <div className="settings">
-         <div className="setting-group-container">
+          <div className="mobileSettingsbuttons">
+            <button onClick={handleBackClick}>Back</button>
+            <button onClick={handleNextClick}>Next</button>
+          </div>
+
+         <div className={`setting-group-container upload-setting-group-container ${isNotShow1 ? 'not-show' : ''}`}>
             <div className="subtitle">
               <h3>1. Datei hochladen</h3>
             </div>
@@ -319,7 +342,7 @@ function App() {
               />
             </div>
          </div>
-          <div className="setting-group-container">
+          <div className={`setting-group-container ${isNotShow2 ? 'not-show' : ''}`}>
             <div className="subtitle">
               <h3>2. Hintergrund auswählen</h3>
             </div>
@@ -352,7 +375,7 @@ function App() {
                 Zufall
               </button>     
           </div>   
-              <div className="setting-group-container">
+              <div className={`setting-group-container setting-group-container ${isNotShow3 ? 'not-show' : ''}`}>
                 <div className="subtitle">
                   <h3>3. Tuchgröße festlegen</h3>
                 </div>                
@@ -390,7 +413,7 @@ function App() {
                   ))}
                 </div>
               </div>
-            <div className="setting-group-container">
+            <div className={`setting-group-container setting-group-container ${isNotShow4 ? 'not-show' : ''}`}>
               <div className="subtitle">
                 <h3>4. Gestaltung</h3>
               </div>
@@ -428,7 +451,7 @@ function App() {
                 ))}
               </div>
             </div>
-            <div className="setting-group-container last-setting-group-container">
+            <div className={`setting-group-container last-setting-group-container ${isNotShow5 ? 'not-show' : ''}`}>
               <div className="download-div">
                 <div className="subtitle">
                   <h3>4. Download</h3>
