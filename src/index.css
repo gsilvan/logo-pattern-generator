@@ -115,9 +115,13 @@ canvas {
   border-bottom: 1px solid gray;
 }
 
+.last-setting-group-container {
+  border-bottom: initial;
+}
+
 .setting {
   display: flex;
-  gap: 10px
+  align-items: center;;
 }
 
 .setting-group {
@@ -137,14 +141,27 @@ canvas {
 }
 
 .setting-label {
+  display: flex;
   min-width:13ch;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.setting-svg {
+  display: flex;
+  justify-content: center;
+  width: 70px;
 }
 
 .range-input {
-  width: 50%;
+  width: 45%;
+  margin-left: 5px;
+
 }
 .number-input {
   width: 5ch;
+  height: fit-content;
+  margin-left: 15px;
 }
 
 .download-btns {
