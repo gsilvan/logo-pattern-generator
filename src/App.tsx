@@ -324,8 +324,12 @@ function App() {
       <div className="interfase-flex">
         <div className="settings">
           <div className="mobileSettingsbuttons">
-            <button onClick={handleBackClick}>Back</button>
-            <button onClick={handleNextClick}>Next</button>
+            <button onClick={handleBackClick} className={isNotShow1 ? '' : 'not-show-button'}>
+            <div className="slider-button left-arrow"></div>
+            </button>
+            <button onClick={handleNextClick} className={isNotShow5 ? '' : 'not-show-button'}>
+              <div className="slider-button right-arrow"></div>    
+            </button>
           </div>
 
          <div className={`setting-group-container upload-setting-group-container ${isNotShow1 ? 'not-show' : ''}`}>

@@ -297,6 +297,10 @@ bottom: 0;
     padding: 0 20px 0 20px;
   }
 
+  .not-show-button {
+    visibility: hidden;
+  }
+
   .setting-group-container {
     padding: 40px 20px 20px 20px;
     border: initial;
@@ -323,5 +327,23 @@ bottom: 0;
   .range-input {
     width: 25%;
   }
+
+  .slider-button {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent; /* Adjust size */
+    border-bottom: 10px solid transparent; /* Adjust size */
+    cursor: pointer; /* Change cursor to pointer */
+}
+
+.left-arrow {
+    border-right: 10px solid #007BFF; /* Color of the arrow */
+}
+
+.right-arrow {
+    border-left: 10px solid #007BFF; /* Color of the arrow */
+}
+
 
 }
