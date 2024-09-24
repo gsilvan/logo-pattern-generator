@@ -238,7 +238,7 @@ bottom: 0;
 
 
   .interfase {
-    padding-top: 10px;
+    padding-top: 0;
     padding-bottom: 0;
   }
 
@@ -259,6 +259,8 @@ bottom: 0;
     display: flex;
     justify-content: center;
     align-items: center;
+    height: 60vh;
+
   }
 
   canvas {
@@ -269,6 +271,7 @@ bottom: 0;
     padding: 0;
     font-size: 1rem;
     text-align: center;
+    padding-bottom: 30px;
 
   }
 
@@ -280,8 +283,9 @@ bottom: 0;
     gap: 1rem;
     padding: initial;
     padding-top: 20px;
-    position:absolute;
-    bottom: 0;
+    position:relative;
+    height: 40vh;
+    overflow: scroll;
   }
 
   .mobileSettingsbuttons {
@@ -290,17 +294,15 @@ bottom: 0;
     justify-content: space-between;
     position: absolute;
     top: 10px;
+    padding: 0 20px 0 20px;
   }
 
   .setting-group-container {
-    border-right: 1px solid gray;
-    border-bottom: initial;
+    padding: 40px 20px 20px 20px;
+    border: initial;
     min-width: 95vw;
   }
 
-  .upload-setting-group-container {
-    padding-left: 1rem;
-  }
 
   .input-btn::file-selector-button {
   
