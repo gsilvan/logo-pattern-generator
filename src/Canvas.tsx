@@ -60,20 +60,25 @@ export default function Canvas({
   let scaleFactor = 0.24
   // Responsive scale factor for canvas preview
   if (screenWidth > 900) {
-    const canvasPrevDesktopWidth = screenHeight * 0.67;
-    scaleFactor =  canvasPrevDesktopWidth / 4130;
+    const canvasPrevWidth = screenHeight * 0.67;
+    scaleFactor =  canvasPrevWidth / 4130;
   } else {
-    const canvasPrevDesktopWidth = screenWidth * 0.98;
-    scaleFactor =  canvasPrevDesktopWidth / 4130;
+    const canvasPrevWidth = screenWidth * 0.98;
+    scaleFactor =  canvasPrevWidth / 4130;
   }
 
   //coordinate system size
-  const coordSystemSize = 4130 * scaleFactor;
-
+  const coordSystemWidth = canvasSize.width * scaleFactor + 5;
+  const coordSystemHeight = canvasSize.height * scaleFactor + 5 ;
   const coordinateSystemDivStyle = {
-    height: `${coordSystemSize}px`,
-    width: `${coordSystemSize}px`,
+    height: `${coordSystemHeight}px`,
+    width: `${coordSystemWidth}px`,
   };
+
+  const coordinateSystemContainerDivStyle = {
+    height: `${4130 * scaleFactor}px`,
+    width: `${4130 * scaleFactor}px`,
+  }
 
 
   useEffect(() => {
@@ -153,15 +158,17 @@ export default function Canvas({
         width={canvasSize.width}
         height={canvasSize.height}
       />
-      <div className="coordinate-system" style={coordinateSystemDivStyle}>
-        <span className="y-label">35cm</span>
-        <span className="x-label">35cm</span>
-        <canvas
-          id="preview-canvas"
-          ref={previewCanvasRef}
-          width={800}
-          height={600}
-        />
+      <div className="coordinate-system-container" style={coordinateSystemContainerDivStyle}>
+        <div className="coordinate-system" style={coordinateSystemDivStyle}>
+          <span className="y-label">{height + 'cm'}</span>
+          <span className="x-label">{width + 'cm'}</span>
+          <canvas
+            id="preview-canvas"
+            ref={previewCanvasRef}
+            width={800}
+            height={600}
+          />
+        </div>
       </div>
     </>
   );

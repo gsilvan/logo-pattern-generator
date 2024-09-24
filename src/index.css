@@ -50,7 +50,9 @@ h3 {
 }
 
 .canvas-div-container .subtitle {
-  justify-content: center;
+  text-align: initial;
+  padding-bottom: 70px;
+  padding-left: 70px;
 }
 
 .subtitle {
@@ -87,8 +89,9 @@ h3 {
 }
 
 .canvas-div-container {
-  padding-right: 50px;
+  padding-top: 50px;
 }
+
 
 canvas {
   position: absolute;
@@ -156,10 +159,16 @@ canvas {
   max-width: 250px;
 }
 
+.coordinate-system-container {
+  position: relative;
+}
+
 .coordinate-system {
 border-left: 2px solid black;
 border-bottom: 2px solid black;
 position:relative;
+left: 0;
+bottom: 0;
 }
 
  /* Upward arrow (top of left border) */
