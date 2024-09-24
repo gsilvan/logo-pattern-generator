@@ -125,7 +125,7 @@ export default function Canvas({
       }
     }
   }, [
-    
+    scaleFactor,
     canvasRef,
     width,
     height,
