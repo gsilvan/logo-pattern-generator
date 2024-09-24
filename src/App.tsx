@@ -458,7 +458,7 @@ function App() {
             <div className={`setting-group-container last-setting-group-container ${isNotShow5 ? 'not-show' : ''}`}>
               <div className="download-div">
                 <div className="subtitle">
-                  <h3>4. Download</h3>
+                  <h3>5. Download</h3>
                 </div>
               <DownloadCanvas canvasRef={canvasRef}/>
               </div>
