@@ -74,16 +74,16 @@ export default function Canvas({
   }
 
   //coordinate system size
-  const coordSystemWidth = canvasSize.width * scaleFactor + 5;
-  const coordSystemHeight = canvasSize.height * scaleFactor + 5 ;
+  const coordSystemWidth = canvasSize.width * scaleFactor + 7;
+  const coordSystemHeight = canvasSize.height * scaleFactor + 7 ;
   const coordinateSystemDivStyle = {
     height: `${coordSystemHeight}px`,
     width: `${coordSystemWidth}px`,
   };
 
   const coordinateSystemContainerDivStyle = {
-    height: `${4130 * scaleFactor}px`,
-    width: `${4130 * scaleFactor}px`,
+    height: `${4130 * scaleFactor + 8}px`,
+    width: `${4130 * scaleFactor + 8}px`,
   }
 
 
