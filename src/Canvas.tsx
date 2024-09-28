@@ -1,6 +1,5 @@
 import React from "react";
-import { useRef, useEffect, useMemo } from "react";
-
+import { useState, useRef, useEffect, useMemo } from "react";
 function cmToPixel(cm: number): number {
   return Math.round(118 * cm);
 }
@@ -35,13 +34,20 @@ export default function Canvas({
     height: cmToPixel(height),
   };
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [isLogoLoaded, setIsLogoLoaded] = useState(false);
 
   // Memoize the logo image to prevent it from being recreated on every render
   const logo = useMemo(() => {
     const img = new Image();
+    setIsLogoLoaded(false);
     img.src = image;
+    img.onload = () => {
+      setIsLogoLoaded(true);
+    }
     return img;
   }, [image]);
+  
+  
 
   // Memoize the background image to prevent it from being recreated on every render
   const _backgroundImage = useMemo(() => {
@@ -127,6 +133,7 @@ export default function Canvas({
         // Scale and draw the original canvas content on the preview canvas
         previewCtx.scale(scaleFactor, scaleFactor);
         previewCtx.drawImage(canvasRef.current, 0, 0);
+        
       }
     }
   }, [
@@ -147,6 +154,7 @@ export default function Canvas({
     xGap,
     yGap,
     x2Offset,
+    isLogoLoaded
   ]);
 
   return (
