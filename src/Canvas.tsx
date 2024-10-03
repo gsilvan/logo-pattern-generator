@@ -82,8 +82,8 @@ export default function Canvas({
   };
 
   const coordinateSystemContainerDivStyle = {
-    height: `${4130 * scaleFactor + 8}px`,
-    width: `${4130 * scaleFactor + 8}px`,
+    height: `${4130 * scaleFactor + 30}px`,
+    width: `${4130 * scaleFactor + 30}px`,
   }
 
 
