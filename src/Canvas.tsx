@@ -70,7 +70,7 @@ export default function Canvas({
     scaleFactor =  canvasPrevWidth / 4130;
   } else {
     const canvasPrevWidth = screenWidth * 0.80;
-    scaleFactor =  canvasPrevWidth / 4130;
+    scaleFactor =  canvasPrevWidth / 4800;
   }
 
   //coordinate system size
