@@ -59,16 +59,22 @@ function App() {
   const [backgroundColor, setBackgroundColor] = useState("#fff");
   const [selectedImage, setSelectedImage] = useState("");
   const [selectedSetting, setSelectedSetting] = useState(1)
+  const [isToggled, setisToggled] = useState(false)
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleNextClick = () => {
-    setSelectedSetting(selectedSetting + 1);
-    console.log(selectedSetting);
+    setSelectedSetting(selectedSetting + 1);    
   }
   const handleBackClick = () => {
     setSelectedSetting(selectedSetting - 1);
-    console.log(selectedSetting);
+  }
+
+  const handleToggle = () => {
+    !isToggled && setBackgroundColor("#fff");
+    !isToggled && setSelectedImage("");
+    setisToggled(!isToggled);
+
   }
 
   const isNotShow1 = window.screen.width < 900 && selectedSetting !== 1;
@@ -305,6 +311,8 @@ function App() {
     setX2Offset(getRandomInt(-100, 100));
     setXLogoPadding(getRandomInt(0, 200));
     setYLogoPadding(getRandomInt(0, 200));
+  }
+  function makeBgColorRand() {
     setBackgroundColor(getRandomColor());
   }
 
@@ -350,7 +358,19 @@ function App() {
             <div className="subtitle">
               <h3>2. Hintergrund auswählen</h3>
             </div>
-            <div className="setting-group background-settings">
+            <div className="toggleDiv">
+              <label htmlFor="hintergrundToggle">
+              Kein Hintergrund
+              </label>
+              <label className="switch">
+                <input 
+                  id="hintergrundToggle"
+                  type="checkbox"
+                  onClick={handleToggle}/>
+                <span className="slider round"></span>
+              </label>        
+            </div>      
+            <div className={`setting-group background-settings ${isToggled && 'not-show'}`}>
               <div>
                 <div className="color-picker-flex">
                   <label htmlFor="colorPicker">
@@ -371,13 +391,13 @@ function App() {
                   setSelectedImage={setSelectedImage}
                 />
               </div>
-            </div>
               <button
-                className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
-                onClick={makeRand}
+                className="zufall-btn text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
+                onClick={makeBgColorRand}
               >
                 Zufall
               </button>     
+            </div>
           </div>   
               <div className={`setting-group-container setting-group-container ${isNotShow3 ? 'not-show' : ''}`}>
                 <div className="subtitle">
@@ -454,6 +474,12 @@ function App() {
                   </div>
                 ))}
               </div>
+              <button
+                className="zufall-btn text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
+                onClick={makeRand}
+              >
+                Zufall
+              </button>     
             </div>
             <div className={`setting-group-container last-setting-group-container ${isNotShow5 ? 'not-show' : ''}`}>
               <div className="download-div">
