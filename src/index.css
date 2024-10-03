@@ -326,9 +326,6 @@ input:checked + .slider:before {
     display: flex;
     justify-content: center;
     position: initial;
-    max-width: 100vw;
-    max-height: 100vh;
-    overflow: hidden;
   }
 
   .canvas-div-container {
