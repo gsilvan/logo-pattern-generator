@@ -5,7 +5,7 @@ import convertPdfPageToImage from "./pdf";
 import { GlobalWorkerOptions } from "pdfjs-dist";
 import { ImageSelector } from "./image-selector";
 
-GlobalWorkerOptions.workerSrc = process.env.PUBLIC_URL + "/pdf.worker.mjs";
+GlobalWorkerOptions.workerSrc = process.env.PUBLIC_URL + "/pdf.worker.min.mjs";
 function getRandomInt(min: number, max: number): number {
   min = Math.ceil(min);
   max = Math.floor(max);
