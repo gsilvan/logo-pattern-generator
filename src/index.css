@@ -96,6 +96,10 @@ h3 {
   padding-top: 50px;
 }
 
+.canvas-div-sticky {
+  position: sticky;
+  top: 50px;
+}
 
 canvas {
   position: absolute;
@@ -336,7 +340,10 @@ input:checked + .slider:before {
     justify-content: center;
     align-items: center;
     height: 63vh;
+  }
 
+  .canvas-div-sticky {
+    display: none;
   }
 
   canvas {
