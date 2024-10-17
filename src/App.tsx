@@ -5,7 +5,7 @@ import convertPdfPageToImage from "./pdf";
 import { GlobalWorkerOptions } from "pdfjs-dist";
 import { ImageSelector } from "./image-selector";
 
-GlobalWorkerOptions.workerSrc = process.env.PUBLIC_URL + "/pdf.worker.min.mjs";
+GlobalWorkerOptions.workerSrc = process.env.PUBLIC_URL + "/pdf.worker.mjs";
 function getRandomInt(min: number, max: number): number {
   min = Math.ceil(min);
   max = Math.floor(max);
@@ -59,7 +59,8 @@ function App() {
   const [backgroundColor, setBackgroundColor] = useState("#fff");
   const [selectedImage, setSelectedImage] = useState("");
   const [selectedSetting, setSelectedSetting] = useState(1)
-  const [isToggled, setisToggled] = useState(false)
+  const [isToggled, setIsToggled] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -73,8 +74,7 @@ function App() {
   const handleToggle = () => {
     !isToggled && setBackgroundColor("#fff");
     !isToggled && setSelectedImage("");
-    setisToggled(!isToggled);
-
+    setIsToggled(!isToggled);
   }
 
   const isNotShow1 = window.screen.width < 900 && selectedSetting !== 1;
@@ -107,6 +107,11 @@ function App() {
       }
     }
   };
+
+  const imgLoading = () => {
+    setIsLoading(!isLoading)
+  }
+  
 
   const settings = [
     {
@@ -349,10 +354,14 @@ function App() {
               className="input-btn"
               id="selectFile"
               type="file"
-              onChange={handleImageUpload}
+              onChange={(e) => { 
+                handleImageUpload(e); 
+                imgLoading();
+              }}
               accept="image/*, application/pdf"
               />
             </div>
+            <p className={`${!isLoading && 'not-show'}`}>Ein Moment...</p>
          </div>
           <div className={`setting-group-container ${isNotShow2 ? 'not-show' : ''}`}>
             <div className="subtitle">
@@ -505,7 +514,8 @@ function App() {
               yGap={ylogoPadding}
               x2Offset={x2Offset}
               backgroundImage={selectedImage ? selectedImage : undefined}
-              canvasRef={canvasRef}/>
+              canvasRef={canvasRef}
+              imgOnLoad={imgLoading}/>
         </div>
       </div>          
     </section>

@@ -16,6 +16,7 @@ export default function Canvas({
   yGap,
   x2Offset,
   backgroundImage,
+  imgOnLoad,
 }: {
   canvasRef: React.RefObject<HTMLCanvasElement>;
   width: number;
@@ -28,6 +29,7 @@ export default function Canvas({
   yGap: number;
   x2Offset: number;
   backgroundImage: string | undefined;
+  imgOnLoad: any;
 }) {
   const canvasSize = {
     width: cmToPixel(width),
@@ -42,6 +44,8 @@ export default function Canvas({
     setIsLogoLoaded(false);
     img.src = image;
     img.onload = () => {
+      console.log('loaded')
+      imgOnLoad();  
       setIsLogoLoaded(true);
     }
     return img;
