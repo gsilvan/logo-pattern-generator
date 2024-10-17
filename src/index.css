@@ -343,7 +343,13 @@ input:checked + .slider:before {
   }
 
   .canvas-div-sticky {
-    display: none;
+    padding: initial;
+    flex-direction: column;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: initial;
+    top: initial;
   }
 
   canvas {
