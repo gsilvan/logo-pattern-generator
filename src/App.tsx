@@ -112,6 +112,7 @@ function App() {
     setIsLoading(!isLoading)
   }
   
+  const canvasMaxSize = (window.screen.width < 900) ? 34 : 35;
 
   const settings = [
     {
@@ -243,7 +244,7 @@ function App() {
       value: width,
       setValue: setWidth,
       min: 18,
-      max: 35,
+      max: canvasMaxSize,
       unit: "cm",
       svg: `<svg version='1.1' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45.43506024748558 20.364185039134043' width='45.43506024748558' height='20.364185039134043'>
       <defs>
@@ -276,7 +277,7 @@ function App() {
       value: height,
       setValue: setHeight,
       min: 18,
-      max: 35,
+      max: canvasMaxSize,
       unit: "cm",
       svg: `<svg version='1.1' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20.364185039133645 45.43506024748558' width='20.364185039133645' height='45.43506024748558'>
       <!-- svg-source:excalidraw -->
