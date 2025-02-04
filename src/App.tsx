@@ -355,93 +355,132 @@ function App() {
     <>
     <section className="interfase">
       <div className="interfase-flex">
-        <div className="settings">
-          <div className="mobileSettingsbuttons">
-            <button onClick={handleBackClick} className={isNotShow1 ? '' : 'not-show-button'}>
-            <div className="slider-button left-arrow"></div>
-            </button>
-            <button onClick={handleNextClick} className={isNotShow5 ? '' : 'not-show-button'}>
-              <div className="slider-button right-arrow"></div>    
-            </button>
-          </div>
-
-         <div className={`setting-group-container upload-setting-group-container ${isNotShow1 ? 'not-show' : ''}`}>
-            <div className="subtitle">
-              <h3>1. Datei hochladen</h3>
+        <div className="settings" >
+          <div className="muster-settings" style= {{display: isPacked ? 'none' : 'block'}}>
+            <div className="mobileSettingsbuttons">
+              <button onClick={handleBackClick} className={isNotShow1 ? '' : 'not-show-button'}>
+              <div className="slider-button left-arrow"></div>
+              </button>
+              <button onClick={handleNextClick} className={isNotShow5 ? '' : 'not-show-button'}>
+                <div className="slider-button right-arrow"></div>    
+              </button>
             </div>
-            <div className="logo-upload">
-              <input
-              className="input-btn"
-              id="selectFile"
-              type="file"
-              onChange={(e) => { 
-                handleImageUpload(e); 
-                imgLoading();
-              }}
-              accept="image/*, application/pdf"
-              />
-            </div>
-            <p className={`${!isLoading && 'not-show'}`}>Ein Moment...</p>
-         </div>
-          <div className={`setting-group-container ${isNotShow2 ? 'not-show' : ''}`}>
-            <div className="subtitle">
-              <h3>2. Hintergrund auswählen</h3>
-            </div>
-            <div className="toggleDiv">
-              <label htmlFor="hintergrundToggle">
-              Kein Hintergrund
-              </label>
-              <label className="switch">
-                <input 
-                  id="hintergrundToggle"
-                  type="checkbox"
-                  onClick={handleToggle}/>
-                <span className="slider round"></span>
-              </label>        
-            </div>      
-            <div className={`setting-group background-settings ${isToggled && 'not-show'}`}>
-              <div>
-                <div className="color-picker-flex">
-                  <label htmlFor="colorPicker">
-                    Hintergrundfarbe
-                  </label>
-                  <input
-                    id="colorPicker"
-                    type="color"
-                    value={backgroundColor}
-                    onChange={(e) => setBackgroundColor(e.target.value)}
-                  />
-                </div>  
+  
+            <div className={`setting-group-container upload-setting-group-container ${isNotShow1 ? 'not-show' : ''}`}>
+              <div className="subtitle">
+                <h3>1. Datei hochladen</h3>
               </div>
-              <div className="image-selector">
-                <ImageSelector
-                  images={images}
-                  selectedImage={selectedImage}
-                  setSelectedImage={setSelectedImage}
+              <div className="logo-upload">
+                <input
+                className="input-btn"
+                id="selectFile"
+                type="file"
+                onChange={(e) => { 
+                  handleImageUpload(e); 
+                  imgLoading();
+                }}
+                accept="image/*, application/pdf"
                 />
               </div>
-              <button
-                className="zufall-btn text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
-                onClick={makeBgColorRand}
-              >
-                Zufall
-              </button>     
+              <p className={`${!isLoading && 'not-show'}`}>Ein Moment...</p>
             </div>
-          </div>   
-              <div className={`setting-group-container setting-group-container ${isNotShow3 ? 'not-show' : ''}`}>
+            <div className={`setting-group-container ${isNotShow2 ? 'not-show' : ''}`}>
+              <div className="subtitle">
+                <h3>2. Hintergrund auswählen</h3>
+              </div>
+              <div className="toggleDiv">
+                <label htmlFor="hintergrundToggle">
+                Kein Hintergrund
+                </label>
+                <label className="switch">
+                  <input 
+                    id="hintergrundToggle"
+                    type="checkbox"
+                    onClick={handleToggle}/>
+                  <span className="slider round"></span>
+                </label>        
+              </div>      
+              <div className={`setting-group background-settings ${isToggled && 'not-show'}`}>
+                <div>
+                  <div className="color-picker-flex">
+                    <label htmlFor="colorPicker">
+                      Hintergrundfarbe
+                    </label>
+                    <input
+                      id="colorPicker"
+                      type="color"
+                      value={backgroundColor}
+                      onChange={(e) => setBackgroundColor(e.target.value)}
+                    />
+                  </div>  
+                </div>
+                <div className="image-selector">
+                  <ImageSelector
+                    images={images}
+                    selectedImage={selectedImage}
+                    setSelectedImage={setSelectedImage}
+                  />
+                </div>
+                <button
+                  className="zufall-btn text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
+                  onClick={makeBgColorRand}
+                >
+                  Zufall
+                </button>     
+              </div>
+            </div>   
+                <div className={`setting-group-container setting-group-container ${isNotShow3 ? 'not-show' : ''}`}>
+                  <div className="subtitle">
+                    <h3>3. Tuchgröße festlegen</h3>
+                  </div>                
+                  <div className="setting-group">
+                    {[settings[5],settings[6]].map((setting) => (
+                      <div className="setting" key={setting.name}>
+                        <div className="setting-label">
+                          <label htmlFor={setting.name}>{setting.description}</label>
+                          <div
+                          className="setting-svg"
+                          dangerouslySetInnerHTML={{ __html: setting.svg || '' }} 
+                        >
+                        </div>
+                        </div>
+                        <input
+                          className="range-input"
+                          value={setting.value}
+                          onChange={(e) => setting.setValue(parseInt(e.target.value))}
+                          type="range"
+                          id={setting.name}
+                          name={setting.name}
+                          min={setting.min}
+                          max={setting.max}
+                        />
+                        <input
+                          className="number-input"
+                          type="number"
+                          value={setting.value}
+                          onChange={(e) => setting.setValue(parseInt(e.target.value))}
+                          min={setting.min}
+                          max={setting.max}
+                        />
+                        <div className="px-2.5 unit">{setting.unit}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              <div className={`setting-group-container setting-group-container ${isNotShow4 ? 'not-show' : ''}`}>
                 <div className="subtitle">
-                  <h3>3. Tuchgröße festlegen</h3>
-                </div>                
+                  <h3>4. Gestaltung</h3>
+                </div>
                 <div className="setting-group">
-                  {[settings[5],settings[6]].map((setting) => (
+                  {settings.slice(0,5).map((setting) => (
                     <div className="setting" key={setting.name}>
                       <div className="setting-label">
                         <label htmlFor={setting.name}>{setting.description}</label>
                         <div
-                        className="setting-svg"
-                        dangerouslySetInnerHTML={{ __html: setting.svg || '' }} 
-                      >
-                      </div>
+                          className="setting-svg"
+                          dangerouslySetInnerHTML={{ __html: setting.svg || '' }} 
+                        >
+                        </div>
                       </div>
                       <input
                         className="range-input"
@@ -465,59 +504,25 @@ function App() {
                     </div>
                   ))}
                 </div>
+                <button
+                  className="zufall-btn text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
+                  onClick={makeRand}
+                >
+                  Zufall
+                </button>     
               </div>
-            <div className={`setting-group-container setting-group-container ${isNotShow4 ? 'not-show' : ''}`}>
-              <div className="subtitle">
-                <h3>4. Gestaltung</h3>
-              </div>
-              <div className="setting-group">
-                {settings.slice(0,5).map((setting) => (
-                  <div className="setting" key={setting.name}>
-                    <div className="setting-label">
-                      <label htmlFor={setting.name}>{setting.description}</label>
-                      <div
-                        className="setting-svg"
-                        dangerouslySetInnerHTML={{ __html: setting.svg || '' }} 
-                      >
-                      </div>
-                    </div>
-                    <input
-                      className="range-input"
-                      value={setting.value}
-                      onChange={(e) => setting.setValue(parseInt(e.target.value))}
-                      type="range"
-                      id={setting.name}
-                      name={setting.name}
-                      min={setting.min}
-                      max={setting.max}
-                    />
-                    <input
-                      className="number-input"
-                      type="number"
-                      value={setting.value}
-                      onChange={(e) => setting.setValue(parseInt(e.target.value))}
-                      min={setting.min}
-                      max={setting.max}
-                    />
-                    <div className="px-2.5 unit">{setting.unit}</div>
+              <div className={`setting-group-container last-setting-group-container ${isNotShow5 ? 'not-show' : ''}`}>
+                <div className="download-div">
+                  <div className="subtitle">
+                    <h3>5. Download</h3>
                   </div>
-                ))}
-              </div>
-              <button
-                className="zufall-btn text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
-                onClick={makeRand}
-              >
-                Zufall
-              </button>     
-            </div>
-            <div className={`setting-group-container last-setting-group-container ${isNotShow5 ? 'not-show' : ''}`}>
-              <div className="download-div">
-                <div className="subtitle">
-                  <h3>5. Download</h3>
+                <DownloadCanvas canvasRef={canvasRef}/>
                 </div>
-              <DownloadCanvas canvasRef={canvasRef}/>
               </div>
-            </div>
+          </div>
+        <div className="packung-settings" style= {{display: !isPacked ? 'none' : 'block'}}>
+
+        </div>
         </div>
         <div className="canvas-div-container">
           <button className="is-packed-btn" id="is-packed-btn" onClick={toggleIsPack}>Verpackt</button>

@@ -1,5 +1,8 @@
 import React from "react";
 import { useState, useRef, useEffect, useMemo } from "react";
+import convertPdfPageToImage from "./pdf";
+
+
 function cmToPixel(cm: number): number {
   return Math.round(118 * cm);
 }
@@ -44,6 +47,7 @@ export default function Canvas({
   };
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isLogoLoaded, setIsLogoLoaded] = useState(false);
+  const [pdfImage, setPdfImage] = useState<string | null>(null);
 
   // Memoize the logo image to prevent it from being recreated on every render
   const logo = useMemo(() => {
@@ -99,6 +103,16 @@ export default function Canvas({
 
 
   useEffect(() => {
+    if (isPacked) {
+      convertPdfPageToImage("/banderolle/Druckstanze_Banderole_235x47mm_Beispiel_1.pdf") 
+        .then((imageDataUrl) => {
+          setPdfImage(imageDataUrl);
+        })
+        .catch((error) => console.error("Failed to load PDF image:", error));
+    }
+  }, [isPacked]);
+
+  useEffect(() => {
     if (previewCanvasRef.current && canvasRef.current) {
       const ctx = canvasRef.current.getContext("2d");
       const previewCtx = previewCanvasRef.current.getContext("2d");
@@ -109,7 +123,9 @@ export default function Canvas({
 
         ctx.save();
         ctx.translate(canvasSize.width / 2, canvasSize.height / 2);
+        
         ctx.rotate((rotation * Math.PI) / 180);
+  
 
         for (let i = -100; i < 100; i++) {
           for (let j = -100; j < 100; j++) {
@@ -134,8 +150,23 @@ export default function Canvas({
             );
           }
         }
-
         ctx.restore();
+
+        if (isPacked && pdfImage) {
+          const img = new Image();
+          img.src = pdfImage;
+            const imgWidth = img.width;
+            const imgHeight = img.height;
+            
+            if (imgWidth && imgHeight) {
+              const centerX = (canvasSize.width - imgWidth) / 2 ;
+              const centerY = (canvasSize.height - imgHeight) / 2;
+        
+              ctx.drawImage(img, centerX, centerY, imgWidth, imgHeight);
+            }
+          
+        }
+
 
         const scaledWidth = canvasRef.current.width * scaleFactor;
         const scaledHeight = canvasRef.current.height * scaleFactor;
@@ -166,7 +197,9 @@ export default function Canvas({
     xGap,
     yGap,
     x2Offset,
-    isLogoLoaded
+    isLogoLoaded,
+    isPacked,
+    pdfImage
   ]);
 
   return (
