@@ -17,6 +17,8 @@ export default function Canvas({
   x2Offset,
   backgroundImage,
   imgOnLoad,
+  isPacked,
+  packedHeight,
 }: {
   canvasRef: React.RefObject<HTMLCanvasElement>;
   width: number;
@@ -30,10 +32,15 @@ export default function Canvas({
   x2Offset: number;
   backgroundImage: string | undefined;
   imgOnLoad: any;
+  isPacked: any;
+  packedHeight: number;
 }) {
+  
+  
+  
   const canvasSize = {
-    width: cmToPixel(width),
-    height: cmToPixel(height),
+    width: isPacked ? cmToPixel(10) : cmToPixel(width),
+    height: isPacked ? cmToPixel(packedHeight) : cmToPixel(height),
   };
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isLogoLoaded, setIsLogoLoaded] = useState(false);
@@ -95,13 +102,15 @@ export default function Canvas({
     if (previewCanvasRef.current && canvasRef.current) {
       const ctx = canvasRef.current.getContext("2d");
       const previewCtx = previewCanvasRef.current.getContext("2d");
+
       if (ctx && previewCtx) {
         ctx.fillStyle = backgroundColor;
         ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
-        ctx.save(); // Save the current state
-        ctx.translate(canvasSize.width / 2, canvasSize.height / 2); // Move the origin to the center
+        ctx.save();
+        ctx.translate(canvasSize.width / 2, canvasSize.height / 2);
         ctx.rotate((rotation * Math.PI) / 180);
+
         for (let i = -100; i < 100; i++) {
           for (let j = -100; j < 100; j++) {
             ctx.drawImage(
@@ -109,10 +118,11 @@ export default function Canvas({
               i * _backgroundImage.width,
               j * _backgroundImage.height,
               _backgroundImage.width,
-              _backgroundImage.height,
+              _backgroundImage.height
             );
           }
         }
+
         for (let i = -100; i < 100; i++) {
           for (let j = -100; j < 100; j++) {
             ctx.drawImage(
@@ -120,24 +130,22 @@ export default function Canvas({
               i * logo.width * _scale + i * xGap + (j % 2) * x2Offset,
               j * logo.height * _scale + j * yGap,
               logo.width * _scale,
-              logo.height * _scale,
+              logo.height * _scale
             );
           }
         }
+
         ctx.restore();
-        
 
         const scaledWidth = canvasRef.current.width * scaleFactor;
-        const scaledHeight = canvasRef.current.height * scaleFactor;      
+        const scaledHeight = canvasRef.current.height * scaleFactor;
 
-        // Set preview canvas size
         previewCanvasRef.current.width = scaledWidth;
         previewCanvasRef.current.height = scaledHeight;
-
-        // Scale and draw the original canvas content on the preview canvas
         previewCtx.scale(scaleFactor, scaleFactor);
         previewCtx.drawImage(canvasRef.current, 0, 0);
-        
+
+      
       }
     }
   }, [
@@ -172,15 +180,17 @@ export default function Canvas({
       />
       <div className="coordinate-system-container" style={coordinateSystemContainerDivStyle}>
         <div className="coordinate-system" style={coordinateSystemDivStyle}>
-          <span className="y-label">{height + 'cm'}</span>
-          <span className="x-label">{width + 'cm'}</span>
+          <span className="y-label">{isPacked ? packedHeight : height + 'cm'}</span>
+          <span className="x-label">{isPacked ? 10 : width + 'cm'}</span>
           <canvas
             id="preview-canvas"
             ref={previewCanvasRef}
             width={800}
             height={600}
           />
+
         </div>
+      
       </div>
     </>
   );

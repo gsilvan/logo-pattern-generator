@@ -61,6 +61,8 @@ function App() {
   const [selectedSetting, setSelectedSetting] = useState(1)
   const [isToggled, setIsToggled] = useState(false)
   const [isLoading, setIsLoading] = useState(false);
+  const [isPacked, setIsPacked] = useState(false);
+  const [packedHeight, setPackedHeight] = useState(height/2)
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -109,7 +111,24 @@ function App() {
   };
 
   const imgLoading = () => {
-    setIsLoading(!isLoading)
+    setIsLoading(!isLoading);
+  }
+
+  const toggleIsPack = () => {
+    
+    const isPackedEl = document.getElementById('is-packed-btn');
+    
+    setIsPacked(!isPacked);
+    setPackedHeight(height/2)
+    
+    if (isPackedEl) { 
+      if (isPacked) {
+        isPackedEl.textContent = 'Verpackt';
+      } else {
+        isPackedEl.textContent = 'Unverpackt'
+        
+      }
+    }
   }
   
   const canvasMaxSize = (window.screen.width < 900) ? 34 : 35;
@@ -501,25 +520,30 @@ function App() {
             </div>
         </div>
         <div className="canvas-div-container">
+          <button className="is-packed-btn" id="is-packed-btn" onClick={toggleIsPack}>Verpackt</button>
           <div className="canvas-div-sticky">
             <div className="subtitle">
               <h3>Streudruckersteller Design-Vorschau</h3>
             </div>
-                <Canvas
-                image={image}
-                width={width}
-                height={height}
-                rotation={rotation}
-                logoTargetWidth={logoTargetWidth}
-                backgroundColor={backgroundColor}
-                xGap={xlogoPadding}
-                yGap={ylogoPadding}
-                x2Offset={x2Offset}
-                backgroundImage={selectedImage ? selectedImage : undefined}
-                canvasRef={canvasRef}
-                imgOnLoad={imgLoading}/>
-          </div>
-          </div>
+              <Canvas
+              image={image}
+              width={width}
+              height={height}
+              rotation={rotation}
+              logoTargetWidth={logoTargetWidth}
+              backgroundColor={backgroundColor}
+              xGap={xlogoPadding}
+              yGap={ylogoPadding}
+              x2Offset={x2Offset}
+              backgroundImage={selectedImage ? selectedImage : undefined}
+              canvasRef={canvasRef}
+              imgOnLoad={imgLoading}
+              isPacked={isPacked}
+              packedHeight={packedHeight}
+              />
+          </div>  
+          {/* <div className="pack-prw-container" style={{backgroundColor: 'black', height: '100px',position:'relative', bottom:'0'}}></div> */}
+        </div>
       </div>          
     </section>
     </>
