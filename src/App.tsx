@@ -53,6 +53,7 @@ function App() {
   const [xlogoPadding, setXLogoPadding] = useState(0);
   const [ylogoPadding, setYLogoPadding] = useState(0);
   const [image, setImage] = useState("");
+  const [banderoleImage, setbanderoleImage] = useState("");
   const [width, setWidth] = useState(25);
   const [height, setHeight] = useState(25);
   const [x2Offset, setX2Offset] = useState(0);
@@ -91,20 +92,40 @@ function App() {
     const file = e.target.files?.[0];
 
     if (file) {
-      if (file.type === "application/pdf") {
-        console.log(file);
-        try {
-          const imageDataUrl = await convertPdfPageToImage(file, 1, 2);
-          setImage(imageDataUrl);
-        } catch (error) {
-          console.error("Error converting PDF to image:", error);
+      if (isPacked){
+        if (file.type === "application/pdf") {
+          console.log(file);
+          try {
+            const imageDataUrl = await convertPdfPageToImage(file, 1, 2);
+            setbanderoleImage(imageDataUrl);
+          } catch (error) {
+            console.error("Error converting PDF to image:", error);
+          }
+        } else {
+          try {
+            const imageDataUrl = await readFileAsDataURL(file);
+            setbanderoleImage(imageDataUrl);
+          } catch (error) {
+            console.error("Error reading file:", error);
+          }
         }
-      } else {
-        try {
-          const imageDataUrl = await readFileAsDataURL(file);
-          setImage(imageDataUrl);
-        } catch (error) {
-          console.error("Error reading file:", error);
+      }
+      else {
+        if (file.type === "application/pdf") {
+          console.log(file);
+          try {
+            const imageDataUrl = await convertPdfPageToImage(file, 1, 2);
+            setImage(imageDataUrl);
+          } catch (error) {
+            console.error("Error converting PDF to image:", error);
+          }
+        } else {
+          try {
+            const imageDataUrl = await readFileAsDataURL(file);
+            setImage(imageDataUrl);
+          } catch (error) {
+            console.error("Error reading file:", error);
+          }
         }
       }
     }
@@ -518,10 +539,35 @@ function App() {
                   </div>
                 <DownloadCanvas canvasRef={canvasRef}/>
                 </div>
-              </div>
+            </div>
           </div>
         <div className="packung-settings" style= {{display: !isPacked ? 'none' : 'block'}}>
-
+        <div className={`setting-group-container upload-setting-group-container ${isNotShow1 ? 'not-show' : ''}`}>
+          <div className="subtitle">
+            <h3>1. Datei hochladen</h3>
+          </div>
+          <div className="logo-upload">
+            <input
+            className="input-btn"
+            id="selectFile"
+            type="file"
+            onChange={(e) => { 
+              handleImageUpload(e); 
+              imgLoading();
+            }}
+            accept="image/*, application/pdf"
+            />
+          </div>
+          <div className={`setting-group-container last-setting-group-container ${isNotShow5 ? 'not-show' : ''}`}>
+              <div className="download-div">
+                <div className="subtitle">
+                  <h3>5. Download</h3>
+                </div>
+              <DownloadCanvas canvasRef={canvasRef}/>
+              </div>
+            </div>
+          <p className={`${!isLoading && 'not-show'}`}>Ein Moment...</p>
+        </div>
         </div>
         </div>
         <div className="canvas-div-container">
@@ -532,6 +578,7 @@ function App() {
             </div>
               <Canvas
               image={image}
+              banderoleImage = {banderoleImage}
               width={width}
               height={height}
               rotation={rotation}

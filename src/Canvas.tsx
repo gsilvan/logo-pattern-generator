@@ -12,6 +12,7 @@ export default function Canvas({
   width,
   height,
   image,
+  banderoleImage,
   rotation,
   logoTargetWidth,
   backgroundColor,
@@ -27,6 +28,7 @@ export default function Canvas({
   width: number;
   height: number;
   image: string;
+  banderoleImage: string;
   rotation: number;
   logoTargetWidth: number;
   backgroundColor: string;
@@ -55,12 +57,22 @@ export default function Canvas({
     setIsLogoLoaded(false);
     img.src = image;
     img.onload = () => {
-      console.log('loaded')
       imgOnLoad();  
       setIsLogoLoaded(true);
     }
     return img;
   }, [image]);
+
+  const banderoleLogo = useMemo(() => {
+    const img = new Image();
+    setIsLogoLoaded(false);
+    img.src = banderoleImage;
+    img.onload = () => {
+      imgOnLoad();  
+      setIsLogoLoaded(true);
+    }
+    return img;
+  }, [banderoleImage]);
   
   
 
@@ -155,16 +167,29 @@ export default function Canvas({
         if (isPacked && pdfImage) {
           const img = new Image();
           img.src = pdfImage;
-            const imgWidth = img.width;
-            const imgHeight = img.height;
-            
-            if (imgWidth && imgHeight) {
-              const centerX = (canvasSize.width - imgWidth) / 2 ;
-              const centerY = (canvasSize.height - imgHeight) / 2;
-        
-              ctx.drawImage(img, centerX, centerY, imgWidth, imgHeight);
-            }
+
+          const imgAspectRatio = img.width / img.height;
+          const imgWidth = canvasSize.width;
+          const imgHeight = img.width / imgAspectRatio;
+
+
+          const bLAspectRatio = banderoleLogo.width / banderoleLogo.height
+          const bLHeight = imgHeight;
+          const bLWidth = bLAspectRatio * bLHeight;
           
+          if (imgWidth && imgHeight) {
+            const centerX = (canvasSize.width - imgWidth) / 2 ;
+            const centerY = (canvasSize.height - imgHeight) / 2;
+      
+            ctx.drawImage(img, centerX, centerY, imgWidth, imgHeight);
+
+            if (bLWidth && bLHeight) { 
+              const centerBLX = (canvasSize.width - bLWidth) / 2 ;
+              const centerBLY = (canvasSize.height - bLHeight) / 2;
+              ctx.drawImage(banderoleLogo, centerBLX, centerBLY, bLWidth, bLHeight);
+              console.log(banderoleLogo, bLAspectRatio, bLHeight,bLWidth);
+            }
+          }
         }
 
 
