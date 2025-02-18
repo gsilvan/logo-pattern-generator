@@ -1,7 +1,5 @@
 import React from "react";
 import { useState, useRef, useEffect, useMemo } from "react";
-import convertPdfPageToImage from "./pdf";
-
 
 function cmToPixel(cm: number): number {
   return Math.round(118 * cm);
@@ -23,6 +21,7 @@ export default function Canvas({
   imgOnLoad,
   isPacked,
   packedHeight,
+  packedView,
 }: {
   canvasRef: React.RefObject<HTMLCanvasElement>;
   width: number;
@@ -39,10 +38,8 @@ export default function Canvas({
   imgOnLoad: any;
   isPacked: any;
   packedHeight: number;
+  packedView: number;
 }) {
-  
-  
-  
   const canvasSize = {
     width: isPacked ? cmToPixel(10) : cmToPixel(width),
     height: isPacked ? cmToPixel(packedHeight) : cmToPixel(height),
@@ -57,9 +54,9 @@ export default function Canvas({
     setIsLogoLoaded(false);
     img.src = image;
     img.onload = () => {
-      imgOnLoad();  
+      imgOnLoad();
       setIsLogoLoaded(true);
-    }
+    };
     return img;
   }, [image]);
 
@@ -68,13 +65,11 @@ export default function Canvas({
     setIsLogoLoaded(false);
     img.src = banderoleImage;
     img.onload = () => {
-      imgOnLoad();  
+      imgOnLoad();
       setIsLogoLoaded(true);
-    }
+    };
     return img;
   }, [banderoleImage]);
-  
-  
 
   // Memoize the background image to prevent it from being recreated on every render
   const _backgroundImage = useMemo(() => {
@@ -85,24 +80,23 @@ export default function Canvas({
     return img;
   }, [backgroundImage]);
 
-
   const _scale = logoTargetWidth / (logo.width ?? logoTargetWidth);
 
   const screenWidth = window.screen.width;
-  const screenHeight = window.screen.height
-  let scaleFactor = 0.24
+  const screenHeight = window.screen.height;
+  let scaleFactor = 0.24;
   // Responsive scale factor for canvas preview
   if (screenWidth > 900) {
     const canvasPrevWidth = screenHeight * 0.67;
-    scaleFactor =  canvasPrevWidth / 4130;
+    scaleFactor = canvasPrevWidth / 4130;
   } else {
-    const canvasPrevWidth = screenWidth * 0.80;
-    scaleFactor =  canvasPrevWidth / 4800;
+    const canvasPrevWidth = screenWidth * 0.8;
+    scaleFactor = canvasPrevWidth / 4800;
   }
 
   //coordinate system size
   const coordSystemWidth = canvasSize.width * scaleFactor + 7;
-  const coordSystemHeight = canvasSize.height * scaleFactor + 7 ;
+  const coordSystemHeight = canvasSize.height * scaleFactor + 7;
   const coordinateSystemDivStyle = {
     height: `${coordSystemHeight}px`,
     width: `${coordSystemWidth}px`,
@@ -111,18 +105,19 @@ export default function Canvas({
   const coordinateSystemContainerDivStyle = {
     height: `${4130 * scaleFactor + 30}px`,
     width: `${4130 * scaleFactor + 30}px`,
-  }
+  };
 
-
-  useEffect(() => {
-    if (isPacked) {
-      convertPdfPageToImage("/banderolle/Druckstanze_Banderole_235x47mm_Beispiel_1.pdf") 
-        .then((imageDataUrl) => {
-          setPdfImage(imageDataUrl);
-        })
-        .catch((error) => console.error("Failed to load PDF image:", error));
-    }
-  }, [isPacked]);
+  // useEffect(() => {
+  //   if (isPacked) {
+  //     convertPdfPageToImage(
+  //       "/banderolle/Druckstanze_Banderole_235x47mm_Beispiel_1.pdf",
+  //     )
+  //       .then((imageDataUrl) => {
+  //         setPdfImage(imageDataUrl);
+  //       })
+  //       .catch((error) => console.error("Failed to load PDF image:", error));
+  //   }
+  // }, [isPacked]);
 
   useEffect(() => {
     if (previewCanvasRef.current && canvasRef.current) {
@@ -135,9 +130,8 @@ export default function Canvas({
 
         ctx.save();
         ctx.translate(canvasSize.width / 2, canvasSize.height / 2);
-        
+
         ctx.rotate((rotation * Math.PI) / 180);
-  
 
         for (let i = -100; i < 100; i++) {
           for (let j = -100; j < 100; j++) {
@@ -146,7 +140,7 @@ export default function Canvas({
               i * _backgroundImage.width,
               j * _backgroundImage.height,
               _backgroundImage.width,
-              _backgroundImage.height
+              _backgroundImage.height,
             );
           }
         }
@@ -158,40 +152,66 @@ export default function Canvas({
               i * logo.width * _scale + i * xGap + (j % 2) * x2Offset,
               j * logo.height * _scale + j * yGap,
               logo.width * _scale,
-              logo.height * _scale
+              logo.height * _scale,
             );
           }
         }
         ctx.restore();
 
-        if (isPacked && pdfImage) {
-          const img = new Image();
-          img.src = pdfImage;
-
-          const imgAspectRatio = img.width / img.height;
-          const imgWidth = canvasSize.width;
-          const imgHeight = img.width / imgAspectRatio;
-
-
-          const bLAspectRatio = banderoleLogo.width / banderoleLogo.height
-          const bLHeight = imgHeight;
-          const bLWidth = bLAspectRatio * bLHeight;
-          
-          if (imgWidth && imgHeight) {
-            const centerX = (canvasSize.width - imgWidth) / 2 ;
-            const centerY = (canvasSize.height - imgHeight) / 2;
-      
-            ctx.drawImage(img, centerX, centerY, imgWidth, imgHeight);
-
-            if (bLWidth && bLHeight) { 
-              const centerBLX = (canvasSize.width - bLWidth) / 2 ;
-              const centerBLY = (canvasSize.height - bLHeight) / 2;
-              ctx.drawImage(banderoleLogo, centerBLX, centerBLY, bLWidth, bLHeight);
-              console.log(banderoleLogo, bLAspectRatio, bLHeight,bLWidth);
-            }
+        if (isPacked) {
+          if (packedView === 1) {
+            const height = cmToPixel(4.7);
+            const width = canvasSize.width;
+            const centerY = (canvasSize.height - height) / 2;
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, centerY, width, height);
+            const logoHeight = height;
+            const logoWidth =
+              (banderoleLogo.width / banderoleLogo.height) * logoHeight;
+            const logoX = (canvasSize.width - logoWidth) / 2;
+            const logoY = (canvasSize.height - logoHeight) / 2;
+            ctx.drawImage(banderoleLogo, logoX, logoY, logoWidth, logoHeight);
           }
-        }
+          if (packedView === 2) {
+            const height = cmToPixel(4.7);
+            const centerY = (canvasSize.height - height) / 2;
+            const img = new Image();
+            img.src = "/banderole/Banderole_Backside.svg";
+            console.log(img);
+            ctx.drawImage(img, 0, centerY, canvasSize.width, height);
+          }
 
+          // const img = new Image();
+          // img.src = pdfImage;
+
+          // const imgAspectRatio = img.width / img.height;
+          // const imgWidth = canvasSize.width;
+          // const imgHeight = img.width / imgAspectRatio;
+
+          // const bLAspectRatio = banderoleLogo.width / banderoleLogo.height;
+          // const bLHeight = imgHeight;
+          // const bLWidth = bLAspectRatio * bLHeight;
+
+          // if (imgWidth && imgHeight) {
+          //   const centerX = (canvasSize.width - imgWidth) / 2;
+          //   const centerY = (canvasSize.height - imgHeight) / 2;
+
+          //   ctx.drawImage(img, centerX, centerY, imgWidth, imgHeight);
+
+          //   if (bLWidth && bLHeight) {
+          //     const centerBLX = (canvasSize.width - bLWidth) / 2;
+          //     const centerBLY = (canvasSize.height - bLHeight) / 2;
+          //     ctx.drawImage(
+          //       banderoleLogo,
+          //       centerBLX,
+          //       centerBLY,
+          //       bLWidth,
+          //       bLHeight,
+          //     );
+          //     console.log(banderoleLogo, bLAspectRatio, bLHeight, bLWidth);
+          //   }
+          // }
+        }
 
         const scaledWidth = canvasRef.current.width * scaleFactor;
         const scaledHeight = canvasRef.current.height * scaleFactor;
@@ -200,8 +220,6 @@ export default function Canvas({
         previewCanvasRef.current.height = scaledHeight;
         previewCtx.scale(scaleFactor, scaleFactor);
         previewCtx.drawImage(canvasRef.current, 0, 0);
-
-      
       }
     }
   }, [
@@ -224,7 +242,8 @@ export default function Canvas({
     x2Offset,
     isLogoLoaded,
     isPacked,
-    pdfImage
+    pdfImage,
+    packedView,
   ]);
 
   return (
@@ -236,19 +255,22 @@ export default function Canvas({
         width={canvasSize.width}
         height={canvasSize.height}
       />
-      <div className="coordinate-system-container" style={coordinateSystemContainerDivStyle}>
+      <div
+        className="coordinate-system-container"
+        style={coordinateSystemContainerDivStyle}
+      >
         <div className="coordinate-system" style={coordinateSystemDivStyle}>
-          <span className="y-label">{isPacked ? packedHeight : height + 'cm'}</span>
-          <span className="x-label">{isPacked ? 10 : width + 'cm'}</span>
+          <span className="y-label">
+            {isPacked ? packedHeight : height + "cm"}
+          </span>
+          <span className="x-label">{isPacked ? 10 : width + "cm"}</span>
           <canvas
             id="preview-canvas"
             ref={previewCanvasRef}
             width={800}
             height={600}
           />
-
         </div>
-      
       </div>
     </>
   );
