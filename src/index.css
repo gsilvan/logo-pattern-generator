@@ -2,13 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
+
+/* @font-face {
   font-family: 'Virgil';
   src: url('./fonts/Virgil.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
-}
-
+} */
 
 body {
   margin: 0;
@@ -17,8 +17,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: 'Virgil', sans-serif;
-  font-size: 1.15rem;
+  font-family: Arial, Helvetica, sans-serif ;
+  font-size: 1rem;
 
 }
 
@@ -312,6 +312,12 @@ input:checked + .slider:before {
 
 .slider.round:before {
   border-radius: 50%;
+}
+
+.is-packed-span {
+  position: absolute;
+  top: 75px;
+  right: 100px
 }
 
 @media (max-width: 900px) {

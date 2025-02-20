@@ -63,10 +63,19 @@ function App() {
   const [isToggled, setIsToggled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPacked, setIsPacked] = useState(false);
-  const [packedHeight, setPackedHeight] = useState(height / 2);
-  const [PackedView, setPackedView] = useState(1);
+  const [blLogoTargetWidth, setBlLogoTargetWidth] = useState(200);
+  const [blRotation, setBlRotation] = useState(0);
+  const [blXPosition, setBlXPosition] = useState(0);
+  const [blYPosition, setBlYPosition] = useState(0);
+  const [companyName, setCompanyName] = useState("");
+  const [companyStreet, setCompanyStreet] = useState("");
+  const [companyZipCode, setCompanyZipCode] = useState("");
+  const [companyCity, setCompanyCity] = useState("");
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef1 = useRef<HTMLCanvasElement>(null);
+  const canvasRef2 = useRef<HTMLCanvasElement | null>(null);
+  const canvasRef3 = useRef<HTMLCanvasElement | null>(null);
+  const canvasRef4 = useRef<HTMLCanvasElement | null>(null);
 
   const handleNextClick = () => {
     setSelectedSetting(selectedSetting + 1);
@@ -93,7 +102,6 @@ function App() {
     if (file) {
       if (isPacked) {
         if (file.type === "application/pdf") {
-          console.log(file);
           try {
             const imageDataUrl = await convertPdfPageToImage(file, 1, 2);
             setbanderoleImage(imageDataUrl);
@@ -110,7 +118,6 @@ function App() {
         }
       } else {
         if (file.type === "application/pdf") {
-          console.log(file);
           try {
             const imageDataUrl = await convertPdfPageToImage(file, 1, 2);
             setImage(imageDataUrl);
@@ -134,16 +141,16 @@ function App() {
   };
 
   const toggleIsPack = () => {
-    const isPackedEl = document.getElementById("is-packed-btn");
+    const isPackedEl = document.getElementById("is-packed-span");
 
     setIsPacked(!isPacked);
-    setPackedHeight(height / 2);
+    console.log(isPackedEl);
 
     if (isPackedEl) {
       if (isPacked) {
-        isPackedEl.textContent = "Verpackt";
-      } else {
         isPackedEl.textContent = "Unverpackt";
+      } else {
+        isPackedEl.textContent = "Verpackt";
       }
     }
   };
@@ -154,8 +161,8 @@ function App() {
     {
       name: "scale",
       description: "Logogröße",
-      value: logoTargetWidth,
-      setValue: setLogoTargetWidth,
+      value: isPacked ? blLogoTargetWidth : logoTargetWidth,
+      setValue: isPacked ? setBlLogoTargetWidth : setLogoTargetWidth,
       min: 1,
       max: 1000,
       unit: "px",
@@ -188,8 +195,8 @@ function App() {
     {
       name: "rotation",
       description: "Drehung",
-      value: rotation,
-      setValue: setRotation,
+      value: isPacked ? blRotation : rotation,
+      setValue: isPacked ? setBlRotation : setRotation,
       min: -180,
       max: 180,
       unit: "°",
@@ -237,9 +244,9 @@ function App() {
     },
     {
       name: "xLogoPadding",
-      description: "Logo-Abstand-X",
-      value: xlogoPadding,
-      setValue: setXLogoPadding,
+      description: isPacked ? "X-Position" : "Logo-Abstand-X",
+      value: isPacked ? blXPosition : xlogoPadding,
+      setValue: isPacked ? setBlXPosition : setXLogoPadding,
       min: -500,
       max: 500,
       unit: "px",
@@ -256,9 +263,9 @@ function App() {
     },
     {
       name: "yLogoPadding",
-      description: "Logo-Abstand-Y",
-      value: ylogoPadding,
-      setValue: setYLogoPadding,
+      description: isPacked ? "Y-Position" : "Logo-Abstand-Y",
+      value: isPacked ? blYPosition : xlogoPadding,
+      setValue: isPacked ? setBlYPosition : setYLogoPadding,
       min: -500,
       max: 500,
       unit: "px",
@@ -343,6 +350,33 @@ function App() {
       <mask></mask>
     </svg>
     `,
+    },
+  ];
+
+  const banderoleSettings = [
+    {
+      name: "companyName",
+      description: "Firmenname",
+      value: companyName,
+      setValue: setCompanyName,
+    },
+    {
+      name: "companyStreet",
+      description: "Straße",
+      value: companyStreet,
+      setValue: setCompanyStreet,
+    },
+    {
+      name: "companyZipCode",
+      description: "Postzahl",
+      value: companyZipCode,
+      setValue: setCompanyZipCode,
+    },
+    {
+      name: "companyCity",
+      description: "Ort",
+      value: companyCity,
+      setValue: setCompanyCity,
     },
   ];
 
@@ -567,6 +601,14 @@ function App() {
                   Zufall
                 </button>
               </div>
+              <button
+                className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
+                id="is-packed-btn"
+                onClick={toggleIsPack}
+              >
+                Verpackt
+              </button>
+
               <div
                 className={`setting-group-container last-setting-group-container ${
                   isNotShow5 ? "not-show" : ""
@@ -576,7 +618,12 @@ function App() {
                   <div className="subtitle">
                     <h3>5. Download</h3>
                   </div>
-                  <DownloadCanvas canvasRef={canvasRef} />
+                  <DownloadCanvas
+                    canvasRef1={canvasRef1}
+                    canvasRef2={canvasRef2}
+                    canvasRef3={canvasRef3}
+                    canvasRef4={canvasRef4}
+                  />
                 </div>
               </div>
             </div>
@@ -584,26 +631,117 @@ function App() {
               className="packung-settings"
               style={{ display: !isPacked ? "none" : "block" }}
             >
+              <div className="subtitle">
+                <h3>1. Datei hochladen</h3>
+              </div>
+              <div className="logo-upload">
+                <input
+                  className="input-btn"
+                  id="selectFile"
+                  type="file"
+                  onChange={(e) => {
+                    handleImageUpload(e);
+                    imgLoading();
+                  }}
+                  accept="image/*, application/pdf"
+                />
+              </div>
+              <p className={`${!isLoading && "not-show"}`}>Ein Moment...</p>
+              <div
+                className={`setting-group-container setting-group-container ${
+                  isNotShow4 ? "not-show" : ""
+                }`}
+              >
+                <div className="subtitle">
+                  <h3>4. Gestaltung</h3>
+                </div>
+                <div className="setting-group">
+                  {[settings[0], settings[1], settings[3], settings[4]].map(
+                    (setting) => (
+                      <div className="setting" key={setting.name}>
+                        <div className="setting-label">
+                          <label htmlFor={setting.name}>
+                            {setting.description}
+                          </label>
+                          <div
+                            className="setting-svg"
+                            dangerouslySetInnerHTML={{
+                              __html: setting.svg || "",
+                            }}
+                          ></div>
+                        </div>
+                        <input
+                          className="range-input"
+                          value={setting.value}
+                          onChange={(e) =>
+                            setting.setValue(parseInt(e.target.value))
+                          }
+                          type="range"
+                          id={setting.name}
+                          name={setting.name}
+                          min={setting.min}
+                          max={setting.max}
+                        />
+                        <input
+                          className="number-input"
+                          type="number"
+                          value={setting.value}
+                          onChange={(e) =>
+                            setting.setValue(parseInt(e.target.value))
+                          }
+                          min={setting.min}
+                          max={setting.max}
+                        />
+                        <div className="px-2.5 unit">{setting.unit}</div>
+                      </div>
+                    ),
+                  )}
+                </div>
+              </div>
+              <div
+                className={`setting-group-container setting-group-container ${
+                  isNotShow4 ? "not-show" : ""
+                }`}
+              >
+                <div className="subtitle">
+                  <h3>4. Gestaltung</h3>
+                </div>
+                <div className="setting-group">
+                  {banderoleSettings.map((setting) => (
+                    <div className="setting" key={setting.name}>
+                      <div
+                        className="setting-label"
+                        style={{ minWidth: "10ch" }}
+                      >
+                        <label htmlFor={setting.name}>
+                          {setting.description + ":"}
+                        </label>
+                      </div>
+                      <input
+                        style={{ width: "80%" }}
+                        className="text-input"
+                        value={setting.value}
+                        onChange={(e) => setting.setValue(e.target.value)}
+                        type="text"
+                        id={setting.name}
+                        name={setting.name}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <button
+                className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
+                id="is-packed-btn"
+                onClick={toggleIsPack}
+              >
+                Unverpackt
+              </button>
               <div
                 className={`setting-group-container upload-setting-group-container ${
                   isNotShow1 ? "not-show" : ""
                 }`}
               >
-                <div className="subtitle">
-                  <h3>1. Datei hochladen</h3>
-                </div>
-                <div className="logo-upload">
-                  <input
-                    className="input-btn"
-                    id="selectFile"
-                    type="file"
-                    onChange={(e) => {
-                      handleImageUpload(e);
-                      imgLoading();
-                    }}
-                    accept="image/*, application/pdf"
-                  />
-                </div>
                 <div
                   className={`setting-group-container last-setting-group-container ${
                     isNotShow5 ? "not-show" : ""
@@ -613,45 +751,22 @@ function App() {
                     <div className="subtitle">
                       <h3>5. Download</h3>
                     </div>
-                    <DownloadCanvas canvasRef={canvasRef} />
+                    <DownloadCanvas
+                      canvasRef1={canvasRef1}
+                      canvasRef2={canvasRef2}
+                      canvasRef3={canvasRef3}
+                      canvasRef4={canvasRef4}
+                    />
                   </div>
                 </div>
-                <p className={`${!isLoading && "not-show"}`}>Ein Moment...</p>
               </div>
             </div>
           </div>
           <div className="canvas-div-container">
-            <button
-              className="is-packed-btn"
-              id="is-packed-btn"
-              onClick={toggleIsPack}
-            >
-              Verpackt
-            </button>
-            <div id="packed-views">
-              <button
-                className="btn-view"
-                id="frontside"
-                onClick={() => setPackedView(1)}
-              >
-                Vorderseite
-              </button>
-              <button
-                className="btn-view"
-                id="backside"
-                onClick={() => setPackedView(2)}
-              >
-                Hinterseite
-              </button>
-              <button
-                className="btn-view"
-                id="banderole"
-                onClick={() => setPackedView(3)}
-              >
-                Banderole
-              </button>
-            </div>
             <div className="canvas-div-sticky">
+              <span id="is-packed-span" className="is-packed-span">
+                Unverpackt
+              </span>
               <div className="subtitle">
                 <h3>Streudruckersteller Design-Vorschau</h3>
               </div>
@@ -667,14 +782,22 @@ function App() {
                 yGap={ylogoPadding}
                 x2Offset={x2Offset}
                 backgroundImage={selectedImage ? selectedImage : undefined}
-                canvasRef={canvasRef}
+                canvasRef1={canvasRef1}
+                canvasRef2={canvasRef2}
+                canvasRef3={canvasRef3}
+                canvasRef4={canvasRef4}
                 imgOnLoad={imgLoading}
                 isPacked={isPacked}
-                packedHeight={packedHeight}
-                packedView={PackedView}
+                blLogoTargetWidth={blLogoTargetWidth}
+                blRotation={blRotation}
+                blXPosition={blXPosition}
+                blYPosition={blYPosition}
+                companyName={companyName}
+                companyStreet={companyStreet}
+                companyZipCode={companyZipCode}
+                companyCity={companyCity}
               />
             </div>
-            {/* <div className="pack-prw-container" style={{backgroundColor: 'black', height: '100px',position:'relative', bottom:'0'}}></div> */}
           </div>
         </div>
       </section>
