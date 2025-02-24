@@ -286,9 +286,14 @@ export default function Canvas({
 
         ctx2.save();
 
-        const logoWidth = blLogoTargetWidth;
-        const logoHeight =
+        let logoWidth = blLogoTargetWidth;
+        let logoHeight =
           (banderoleLogo.height / banderoleLogo.width) * logoWidth;
+        if (logoHeight > 554) {
+          logoHeight = 554;
+          logoWidth = (banderoleLogo.width / banderoleLogo.height) * logoHeight;
+        }
+
         const logoX = (cmToPixel(10) - logoWidth) / 2 + blXPosition;
         const logoY = (canvasSize.height / 2 - logoHeight) / 2 + blYPosition;
 
@@ -477,9 +482,13 @@ export default function Canvas({
         ctx4.restore();
         ctx4.save(); // Save canvas state
 
-        const logoWidth = blLogoTargetWidth;
-        const logoHeight =
+        let logoWidth = blLogoTargetWidth;
+        let logoHeight =
           (banderoleLogo.height / banderoleLogo.width) * logoWidth;
+        if (logoHeight > 554) {
+          logoHeight = 554;
+          logoWidth = (banderoleLogo.width / banderoleLogo.height) * logoHeight;
+        }
         const logoX = (img.width - logoWidth) / 2 + blXPosition;
         const logoY = (img.height - logoHeight) / 2 + blYPosition;
         // Move pivot point to center of logo

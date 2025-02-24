@@ -658,7 +658,7 @@ function App() {
                     canvasRef2={canvasRef2}
                     canvasRef3={canvasRef3}
                     canvasRef4={canvasRef4}
-                    canvasesToDownload={[1]}
+                    isPacked={isPacked}
                   />
                 </div>
                 <div
@@ -817,7 +817,7 @@ function App() {
                     canvasRef2={canvasRef2}
                     canvasRef3={canvasRef3}
                     canvasRef4={canvasRef4}
-                    canvasesToDownload={[2, 3, 4]}
+                    isPacked={isPacked}
                   />
                 </div>
                 <button
@@ -832,7 +832,10 @@ function App() {
           </div>
           <div className="canvas-div-container">
             <div className="canvas-div-sticky">
-              <div className="subtitle">
+              <div
+                className="subtitle"
+                style={{ paddingLeft: " 20px", paddingRight: "20px" }}
+              >
                 <h3 style={{ textAlign: "center" }}>
                   Streudruckersteller Design-Vorschau
                 </h3>
