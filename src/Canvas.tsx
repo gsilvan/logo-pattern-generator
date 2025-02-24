@@ -92,12 +92,20 @@ export default function Canvas({
     return img;
   }, [banderoleImage]);
 
+  const banderoleBackside = useMemo(() => {
+    const img = new Image();
+
+    img.src = "/banderole/Banderole_Backside.svg";
+    img.onload = () => {};
+    return img;
+  }, []);
+
   const banderole = useMemo(() => {
     const img = new Image();
     img.src = "/banderole/path3.png";
     img.onload = () => {};
     return img;
-  }, [banderoleImage]);
+  }, []);
   // Memoize the background image to prevent it from being recreated on every render
   const _backgroundImage = useMemo(() => {
     const img = new Image();
@@ -348,9 +356,7 @@ export default function Canvas({
 
         const height = cmToPixel(4.7);
         const centerY = (canvasSize.height / 2 - height) / 2;
-        const img = new Image();
-        img.src = "/banderole/Banderole_Backside.svg";
-        ctx3.drawImage(img, 0, centerY, cmToPixel(10), height);
+        ctx3.drawImage(banderoleBackside, 0, centerY, cmToPixel(10), height);
 
         // Drawing the formatted text
         ctx3.textAlign = "left";
