@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Canvas from "./Canvas";
 import DownloadCanvas from "./Download";
 import convertPdfPageToImage from "./pdf";
@@ -71,6 +71,7 @@ function App() {
   const [companyStreet, setCompanyStreet] = useState("");
   const [companyZipCode, setCompanyZipCode] = useState("");
   const [companyCity, setCompanyCity] = useState("");
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   const canvasRef1 = useRef<HTMLCanvasElement>(null);
   const canvasRef2 = useRef<HTMLCanvasElement | null>(null);
@@ -90,11 +91,22 @@ function App() {
     setIsToggled(!isToggled);
   };
 
-  const isNotShow1 = window.screen.width < 900 && selectedSetting !== 1;
-  const isNotShow2 = window.screen.width < 900 && selectedSetting !== 2;
-  const isNotShow3 = window.screen.width < 900 && selectedSetting !== 3;
-  const isNotShow4 = window.screen.width < 900 && selectedSetting !== 4;
-  const isNotShow5 = window.screen.width < 900 && selectedSetting !== 5;
+  // Effect hook to handle window resize event
+  useEffect(() => {
+    // Function to update the state with the new window width
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      console.log(windowWidth);
+    };
+
+    // Add event listener to listen for resize events
+    window.addEventListener("resize", handleResize);
+
+    // Clean up the event listener when the component unmounts
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []); // Empty array means this effect runs only once (on mount and unmount)
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -142,17 +154,10 @@ function App() {
 
   const toggleIsPack = () => {
     const isPackedEl = document.getElementById("is-packed-span");
+    setSelectedSetting(1);
 
     setIsPacked(!isPacked);
     console.log(isPackedEl);
-
-    if (isPackedEl) {
-      if (isPacked) {
-        isPackedEl.textContent = "Unverpackt";
-      } else {
-        isPackedEl.textContent = "Verpackt";
-      }
-    }
   };
 
   const canvasMaxSize = window.screen.width < 900 ? 34 : 35;
@@ -407,28 +412,50 @@ function App() {
         <div className="interfase-flex">
           <div className="settings">
             <div
+              className="mobileSettingsbuttons"
+              style={
+                windowWidth < 900 ? { display: "flex" } : { display: "none" }
+              }
+            >
+              <button
+                onClick={handleBackClick}
+                id={"backClick"}
+                style={
+                  selectedSetting === 1
+                    ? { visibility: "hidden" }
+                    : { visibility: "initial" }
+                }
+              >
+                <div className="slider-button left-arrow"></div>
+              </button>
+              <button
+                onClick={handleNextClick}
+                id={"nextClick"}
+                style={
+                  !isPacked
+                    ? selectedSetting === 5
+                      ? { visibility: "hidden" }
+                      : { visibility: "initial" }
+                    : selectedSetting === 4
+                      ? { visibility: "hidden" }
+                      : { visibility: "initial" }
+                }
+              >
+                <div className="slider-button right-arrow"></div>
+              </button>
+            </div>
+            <div
               className="muster-settings"
               style={{ display: isPacked ? "none" : "block" }}
             >
-              <div className="mobileSettingsbuttons">
-                <button
-                  onClick={handleBackClick}
-                  className={isNotShow1 ? "" : "not-show-button"}
-                >
-                  <div className="slider-button left-arrow"></div>
-                </button>
-                <button
-                  onClick={handleNextClick}
-                  className={isNotShow5 ? "" : "not-show-button"}
-                >
-                  <div className="slider-button right-arrow"></div>
-                </button>
-              </div>
-
               <div
-                className={`setting-group-container upload-setting-group-container ${
-                  isNotShow1 ? "not-show" : ""
-                }`}
+                className="setting-group-container upload-setting-group-container"
+                id="unpacked-group-setting-1"
+                style={
+                  windowWidth > 900 || selectedSetting === 1
+                    ? { display: "block" }
+                    : { display: "none" }
+                }
               >
                 <div className="subtitle">
                   <h3>1. Datei hochladen</h3>
@@ -448,9 +475,13 @@ function App() {
                 <p className={`${!isLoading && "not-show"}`}>Ein Moment...</p>
               </div>
               <div
-                className={`setting-group-container ${
-                  isNotShow2 ? "not-show" : ""
-                }`}
+                className="setting-group-container "
+                id="unpacked-group-setting-2"
+                style={
+                  windowWidth > 900 || selectedSetting === 2
+                    ? { display: "block" }
+                    : { display: "none" }
+                }
               >
                 <div className="subtitle">
                   <h3>2. Hintergrund auswählen</h3>
@@ -498,9 +529,13 @@ function App() {
                 </div>
               </div>
               <div
-                className={`setting-group-container setting-group-container ${
-                  isNotShow3 ? "not-show" : ""
-                }`}
+                className="setting-group-container setting-group-container"
+                id={"unpacked-group-setting-3"}
+                style={
+                  windowWidth > 900 || selectedSetting === 3
+                    ? { display: "block" }
+                    : { display: "none" }
+                }
               >
                 <div className="subtitle">
                   <h3>3. Tuchgröße festlegen</h3>
@@ -547,9 +582,13 @@ function App() {
                 </div>
               </div>
               <div
-                className={`setting-group-container setting-group-container ${
-                  isNotShow4 ? "not-show" : ""
-                }`}
+                className="setting-group-container setting-group-container"
+                id="unpacked-group-setting-4"
+                style={
+                  windowWidth > 900 || selectedSetting === 4
+                    ? { display: "block" }
+                    : { display: "none" }
+                }
               >
                 <div className="subtitle">
                   <h3>4. Gestaltung</h3>
@@ -601,13 +640,16 @@ function App() {
                   Zufall
                 </button>
               </div>
-
               <div
-                className={`setting-group-container last-setting-group-container ${
-                  isNotShow5 ? "not-show" : ""
-                }`}
+                className="setting-group-container last-setting-group-container"
+                id="unpacked-group-setting-5"
+                style={
+                  windowWidth > 900 || selectedSetting === 5
+                    ? { display: "block" }
+                    : { display: "none" }
+                }
               >
-                <div className="download-div">
+                <div className="download-div" style={{ paddingBottom: "25px" }}>
                   <div className="subtitle">
                     <h3>5. Download</h3>
                   </div>
@@ -619,43 +661,63 @@ function App() {
                     canvasesToDownload={[1]}
                   />
                 </div>
+                <div
+                  style={{ borderTop: "1px solid gray", paddingTop: "25px" }}
+                >
+                  <div className="subtitle">
+                    <h3>6. Brauchst du noch eine Verpackung?</h3>
+                  </div>{" "}
+                  <button
+                    className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
+                    id="is-packed-btn"
+                    onClick={toggleIsPack}
+                  >
+                    Zu den Verpackungseinstellungen
+                  </button>
+                </div>
               </div>
-              <h3>6. Brauchst du noch eine Verpackung?</h3>
-              <button
-                className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
-                id="is-packed-btn"
-                onClick={toggleIsPack}
-              >
-                Zu den Verpackungseinstellungen
-              </button>
             </div>
             <div
               className="packung-settings"
               style={{ display: !isPacked ? "none" : "block" }}
             >
-              <div className="subtitle">
-                <h3>1. Datei hochladen</h3>
-              </div>
-              <div className="logo-upload">
-                <input
-                  className="input-btn"
-                  id="selectFile"
-                  type="file"
-                  onChange={(e) => {
-                    handleImageUpload(e);
-                    imgLoading();
-                  }}
-                  accept="image/*, application/pdf"
-                />
-              </div>
-              <p className={`${!isLoading && "not-show"}`}>Ein Moment...</p>
               <div
-                className={`setting-group-container setting-group-container ${
-                  isNotShow4 ? "not-show" : ""
-                }`}
+                className="setting-group-container upload-setting-group-container"
+                id="packed-group-setting-1"
+                style={
+                  windowWidth > 900 || selectedSetting === 1
+                    ? { display: "block" }
+                    : { display: "none" }
+                }
               >
                 <div className="subtitle">
-                  <h3>4. Gestaltung</h3>
+                  <h3>1. Firmenlogo hochladen</h3>
+                </div>
+                <div className="logo-upload">
+                  <input
+                    className="input-btn"
+                    id="selectFile"
+                    type="file"
+                    onChange={(e) => {
+                      handleImageUpload(e);
+                      imgLoading();
+                    }}
+                    accept="image/*, application/pdf"
+                  />
+                </div>
+                <p className={`${!isLoading && "not-show"}`}>Ein Moment...</p>
+              </div>
+              <div
+                className="setting-group-container "
+                id="packed-group-setting-2"
+                style={
+                  windowWidth > 900 || selectedSetting === 2
+                    ? { display: "block" }
+                    : { display: "none" }
+                }
+              >
+                <div className="subtitle">
+                  <h3>2. Logo einstellen</h3>
                 </div>
                 <div className="setting-group">
                   {[settings[0], settings[1], settings[3], settings[4]].map(
@@ -701,26 +763,30 @@ function App() {
                 </div>
               </div>
               <div
-                className={`setting-group-container setting-group-container ${
-                  isNotShow4 ? "not-show" : ""
-                }`}
+                className="setting-group-container "
+                id="packed-group-setting-3"
+                style={
+                  windowWidth > 900 || selectedSetting === 3
+                    ? { display: "block" }
+                    : { display: "none" }
+                }
               >
                 <div className="subtitle">
-                  <h3>4. Gestaltung</h3>
+                  <h3>3. Inverkehrbringer</h3>
                 </div>
                 <div className="setting-group">
                   {banderoleSettings.map((setting) => (
                     <div className="setting" key={setting.name}>
                       <div
                         className="setting-label"
-                        style={{ minWidth: "10ch" }}
+                        style={{ minWidth: "13ch" }}
                       >
                         <label htmlFor={setting.name}>
                           {setting.description + ":"}
                         </label>
                       </div>
                       <input
-                        style={{ width: "80%" }}
+                        style={{ width: "80%", borderRadius: "2px" }}
                         className="text-input"
                         value={setting.value}
                         onChange={(e) => setting.setValue(e.target.value)}
@@ -734,45 +800,42 @@ function App() {
               </div>
 
               <div
-                className={`setting-group-container upload-setting-group-container ${
-                  isNotShow1 ? "not-show" : ""
-                }`}
+                className="setting-group-container "
+                id="packed-group-setting-2"
+                style={
+                  windowWidth > 900 || selectedSetting === 4
+                    ? { display: "block" }
+                    : { display: "none" }
+                }
               >
-                <div
-                  className={`setting-group-container last-setting-group-container ${
-                    isNotShow5 ? "not-show" : ""
-                  }`}
-                >
-                  <div className="download-div">
-                    <div className="subtitle">
-                      <h3>5. Download</h3>
-                    </div>
-                    <DownloadCanvas
-                      canvasRef1={canvasRef1}
-                      canvasRef2={canvasRef2}
-                      canvasRef3={canvasRef3}
-                      canvasRef4={canvasRef4}
-                      canvasesToDownload={[2, 3, 4]}
-                    />
+                <div className="download-div" style={{ paddingBottom: "25px" }}>
+                  <div className="subtitle">
+                    <h3>4. Download</h3>
                   </div>
+                  <DownloadCanvas
+                    canvasRef1={canvasRef1}
+                    canvasRef2={canvasRef2}
+                    canvasRef3={canvasRef3}
+                    canvasRef4={canvasRef4}
+                    canvasesToDownload={[2, 3, 4]}
+                  />
                 </div>
+                <button
+                  className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
+                  id="is-packed-btn"
+                  onClick={toggleIsPack}
+                >
+                  Zurück zum Tuch
+                </button>
               </div>
-              <button
-                className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
-                id="is-packed-btn"
-                onClick={toggleIsPack}
-              >
-                Zurück zum Tuch
-              </button>
             </div>
           </div>
           <div className="canvas-div-container">
             <div className="canvas-div-sticky">
-              <span id="is-packed-span" className="is-packed-span">
-                Unverpackt
-              </span>
               <div className="subtitle">
-                <h3>Streudruckersteller Design-Vorschau</h3>
+                <h3 style={{ textAlign: "center" }}>
+                  Streudruckersteller Design-Vorschau
+                </h3>
               </div>
               <Canvas
                 image={image}
@@ -800,6 +863,7 @@ function App() {
                 companyStreet={companyStreet}
                 companyZipCode={companyZipCode}
                 companyCity={companyCity}
+                screenWidth={windowWidth}
               />
             </div>
           </div>

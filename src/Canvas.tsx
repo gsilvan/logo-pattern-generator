@@ -32,6 +32,7 @@ export default function Canvas({
   companyStreet,
   companyZipCode,
   companyCity,
+  screenWidth,
 }: {
   canvasRef1: React.RefObject<HTMLCanvasElement>;
   canvasRef2: React.RefObject<HTMLCanvasElement>;
@@ -58,6 +59,7 @@ export default function Canvas({
   companyStreet: string;
   companyZipCode: string;
   companyCity: string;
+  screenWidth: number;
 }) {
   const canvasSize = {
     width: cmToPixel(width),
@@ -117,7 +119,6 @@ export default function Canvas({
 
   const _scale = logoTargetWidth / (logo.width ?? logoTargetWidth);
 
-  const screenWidth = window.screen.width;
   const screenHeight = window.screen.height;
   let scaleFactor = 0.24;
   // Responsive scale factor for canvas preview
@@ -125,7 +126,7 @@ export default function Canvas({
     const canvasPrevWidth = screenHeight * 0.67;
     scaleFactor = canvasPrevWidth / 4130;
   } else {
-    const canvasPrevWidth = screenWidth * 0.8;
+    const canvasPrevWidth = screenWidth * 0.85;
     scaleFactor = canvasPrevWidth / 4800;
   }
 
@@ -142,17 +143,18 @@ export default function Canvas({
   };
 
   const coordinateSystemContainerDivStyle = {
-    height: `${4130 * scaleFactor + 30}px`,
-    width: `${4130 * scaleFactor + 30}px`,
+    height: `${4130 * scaleFactor + 5}px`,
+    width: `${4130 * scaleFactor + 5}px`,
     display: isPacked ? "none" : "block",
   };
   const coordinateSystemContainerPackedDivStyle: CSSProperties = {
-    height: `${4130 * scaleFactor + 30}px`,
-    width: `${4130 * scaleFactor + 30}px`,
+    height: `${4130 * scaleFactor + 5}px`,
+    width: `${4130 * scaleFactor + 5}px`,
     display: isPacked ? "flex" : "none",
-    gap: "100px",
+    gap: screenWidth > 900 ? "100px" : "50px",
     flexDirection: "column",
     justifyContent: "center",
+    paddingTop: "30px",
   };
 
   function wrapText(
@@ -680,10 +682,22 @@ export default function Canvas({
       >
         <div
           className="canvas-flex"
-          style={{ display: "flex", justifyContent: "space-evenly" }}
+          style={{
+            display: "flex",
+            justifyContent:
+              screenWidth < 900 ? "space-between" : "space-evenly",
+          }}
         >
-          <div>
-            <h4>Vorderseite</h4>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              gap: "20px",
+              alignItems: "center",
+            }}
+          >
+            <span className="packung-tag">Vorderseite</span>
             <div className="coordinate-system" style={coordinateSystemDivStyle}>
               <span className="y-label">{height / 2 + "cm"}</span>
               <span className="x-label">{"10 " + "cm"}</span>
@@ -695,8 +709,16 @@ export default function Canvas({
               />
             </div>
           </div>
-          <div>
-            <h4>Hinterseite</h4>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              gap: "20px",
+              alignItems: "center",
+            }}
+          >
+            <span className="packung-tag">Ruckseite</span>
             <div className="coordinate-system" style={coordinateSystemDivStyle}>
               <span className="y-label">{height / 2 + "cm"}</span>
               <span className="x-label">{"10 " + "cm"}</span>
@@ -709,8 +731,16 @@ export default function Canvas({
             </div>
           </div>
         </div>
-        <div>
-          <h4>Banderole</h4>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            gap: "20px",
+            alignItems: "center",
+          }}
+        >
+          <span className="packung-tag">Banderole</span>
           <canvas
             style={{ position: "initial" }}
             id="preview-canvas-4"
