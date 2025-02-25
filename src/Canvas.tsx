@@ -194,7 +194,16 @@ export default function Canvas({
   }
 
   useEffect(() => {
-    if (previewCanvas1Ref.current && canvasRef1.current) {
+    if (
+      previewCanvas1Ref.current &&
+      canvasRef1.current &&
+      previewCanvas2Ref.current &&
+      canvasRef2.current &&
+      previewCanvas3Ref.current &&
+      canvasRef3.current &&
+      previewCanvas4Ref.current &&
+      canvasRef4.current
+    ) {
       const ctx1 = canvasRef1.current.getContext("2d");
       const previewCtx1 = previewCanvas1Ref.current.getContext("2d");
 
@@ -240,8 +249,7 @@ export default function Canvas({
         previewCtx1.scale(scaleFactor, scaleFactor);
         previewCtx1.drawImage(canvasRef1.current, 0, 0);
       }
-    }
-    if (previewCanvas2Ref.current && canvasRef2.current) {
+
       const ctx2 = canvasRef2.current.getContext("2d");
       const previewCtx2 = previewCanvas2Ref.current.getContext("2d");
 
@@ -304,6 +312,7 @@ export default function Canvas({
         ctx2.rotate((blRotation * Math.PI) / 180);
 
         // Draw image centered at the new (0,0) pivot
+
         ctx2.drawImage(
           banderoleLogo,
           -logoWidth / 2, // Shift left to center the image
@@ -322,8 +331,7 @@ export default function Canvas({
         previewCtx2.scale(scaleFactor, scaleFactor);
         previewCtx2.drawImage(canvasRef2.current, 0, 0);
       }
-    }
-    if (previewCanvas3Ref.current && canvasRef3.current) {
+
       const ctx3 = canvasRef3.current.getContext("2d");
       const previewCtx3 = previewCanvas3Ref.current.getContext("2d");
 
@@ -463,8 +471,7 @@ export default function Canvas({
         previewCtx3.scale(scaleFactor, scaleFactor);
         previewCtx3.drawImage(canvasRef3.current, 0, 0);
       }
-    }
-    if (previewCanvas4Ref.current && canvasRef4.current) {
+
       const ctx4 = canvasRef4.current.getContext("2d");
       const previewCtx4 = previewCanvas4Ref.current.getContext("2d");
 
@@ -473,143 +480,155 @@ export default function Canvas({
         img.src = "/banderole/path3.png";
 
         // Set the original canvas to the exact image size
-        canvasRef4.current.width = img.width;
-        canvasRef4.current.height = img.height;
 
-        // Draw the image exactly on the original canvas
-        ctx4.fillRect(0, 0, img.width, img.height);
-        ctx4.drawImage(img, 0, 0, img.width, img.height);
-        ctx4.restore();
-        ctx4.save(); // Save canvas state
+        if (img.height > 0 && img.width > 0) {
+          canvasRef4.current.width = img.width;
+          canvasRef4.current.height = img.height;
+          // Draw the image exactly on the original canvas
+          ctx4.fillRect(0, 0, img.width, img.height);
+          ctx4.drawImage(img, 0, 0, img.width, img.height);
 
-        let logoWidth = blLogoTargetWidth;
-        let logoHeight =
-          (banderoleLogo.height / banderoleLogo.width) * logoWidth;
-        if (logoHeight > 554) {
-          logoHeight = 554;
-          logoWidth = (banderoleLogo.width / banderoleLogo.height) * logoHeight;
-        }
-        const logoX = (img.width - logoWidth) / 2 + blXPosition;
-        const logoY = (img.height - logoHeight) / 2 + blYPosition;
-        // Move pivot point to center of logo
-        ctx4.translate(logoX + logoWidth / 2, logoY + logoHeight / 2);
+          ctx4.restore();
+          ctx4.save(); // Save canvas state
 
-        // Rotate around new pivot point
-        ctx4.rotate((blRotation * Math.PI) / 180);
+          let logoWidth = blLogoTargetWidth;
+          let logoHeight =
+            (banderoleLogo.height / banderoleLogo.width) * logoWidth;
+          if (logoHeight > 554) {
+            logoHeight = 554;
+            logoWidth =
+              (banderoleLogo.width / banderoleLogo.height) * logoHeight;
+          }
+          const logoX = (img.width - logoWidth) / 2 + blXPosition;
+          const logoY = (img.height - logoHeight) / 2 + blYPosition;
+          // Move pivot point to center of logo
+          ctx4.translate(logoX + logoWidth / 2, logoY + logoHeight / 2);
 
-        // Draw image centered at the new (0,0) pivot
-        ctx4.drawImage(
-          banderoleLogo,
-          -logoWidth / 2, // Shift left to center the image
-          -logoHeight / 2, // Shift up to center the image
-          logoWidth,
-          logoHeight,
-        );
+          // Rotate around new pivot point
+          ctx4.rotate((blRotation * Math.PI) / 180);
 
-        // Drawing the formatted text
-        ctx4.restore();
-        ctx4.textAlign = "left";
-        ctx4.textBaseline = "top";
+          // Draw image centered at the new (0,0) pivot
+          ctx4.drawImage(
+            banderoleLogo,
+            -logoWidth / 2, // Shift left to center the image
+            -logoHeight / 2, // Shift up to center the image
+            logoWidth,
+            logoHeight,
+          );
 
-        let x = 200;
-        let y = 50;
-        let maxWidth = 400;
-        let lineHeight = 30;
+          // Drawing the formatted text
+          ctx4.restore();
+          ctx4.textAlign = "left";
+          ctx4.textBaseline = "top";
 
-        // Bold Title: "Anleitung:"
-        y = wrapText(ctx4, "Anleitung:", x, y, maxWidth, lineHeight, true);
+          let x = 200;
+          let y = 50;
+          let maxWidth = 400;
+          let lineHeight = 30;
 
-        // Normal Paragraph
-        y = wrapText(
-          ctx4,
-          "Circa 1 Jahr wiederverwendbar. Kein rohes Fleisch, keinen rohen Fisch einwickeln. Vor direkter Sonneneinstrahlung schützen und nicht über 25 Grad lagern.",
-          x,
-          y,
-          maxWidth,
-          lineHeight,
-        );
+          // Bold Title: "Anleitung:"
+          y = wrapText(ctx4, "Anleitung:", x, y, maxWidth, lineHeight, true);
 
-        // Add extra space before next section
-        y += lineHeight;
+          // Normal Paragraph
+          y = wrapText(
+            ctx4,
+            "Circa 1 Jahr wiederverwendbar. Kein rohes Fleisch, keinen rohen Fisch einwickeln. Vor direkter Sonneneinstrahlung schützen und nicht über 25 Grad lagern.",
+            x,
+            y,
+            maxWidth,
+            lineHeight,
+          );
 
-        // Bold Title: "Reinigung:"
-        y = wrapText(ctx4, "Reinigung:", x, y, maxWidth, lineHeight, true);
+          // Add extra space before next section
+          y += lineHeight;
 
-        // Normal Paragraph
-        y = wrapText(
-          ctx4,
-          "Unter kaltem Wasser abspülen. Evtl. Bio-Spülmittel, sanft schrubben (kein heißes Wasser). Nicht auf der Heizung trocknen.",
-          x,
-          y,
-          maxWidth,
-          lineHeight,
-        );
+          // Bold Title: "Reinigung:"
+          y = wrapText(ctx4, "Reinigung:", x, y, maxWidth, lineHeight, true);
 
-        // Add extra space before next section
-        y += lineHeight;
+          // Normal Paragraph
+          y = wrapText(
+            ctx4,
+            "Unter kaltem Wasser abspülen. Evtl. Bio-Spülmittel, sanft schrubben (kein heißes Wasser). Nicht auf der Heizung trocknen.",
+            x,
+            y,
+            maxWidth,
+            lineHeight,
+          );
 
-        // Bold Title: "Inhaltsstoffe:"
-        y = wrapText(ctx4, "Inhaltsstoffe:", x, y, maxWidth, lineHeight, true);
+          // Add extra space before next section
+          y += lineHeight;
 
-        // Normal Paragraph
-        y = wrapText(
-          ctx4,
-          "GOTS zertifizierte Biobaumwolle, Kiefernharz aus Portugal, Bienenwachs aus kontrolliert biologischem Anbau (kba).",
-          x,
-          y,
-          maxWidth,
-          lineHeight,
-        );
+          // Bold Title: "Inhaltsstoffe:"
+          y = wrapText(
+            ctx4,
+            "Inhaltsstoffe:",
+            x,
+            y,
+            maxWidth,
+            lineHeight,
+            true,
+          );
 
-        ctx4.restore();
+          // Normal Paragraph
+          y = wrapText(
+            ctx4,
+            "GOTS zertifizierte Biobaumwolle, Kiefernharz aus Portugal, Bienenwachs aus kontrolliert biologischem Anbau (kba).",
+            x,
+            y,
+            maxWidth,
+            lineHeight,
+          );
 
-        ctx4.fillStyle = "black";
-        ctx4.textAlign = "left";
-        ctx4.textBaseline = "bottom";
+          ctx4.restore();
 
-        x = img.width - 650;
-        y = img.height - 110;
-        maxWidth = 400;
-        lineHeight = 30;
+          ctx4.fillStyle = "black";
+          ctx4.textAlign = "left";
+          ctx4.textBaseline = "bottom";
 
-        // Bold title: "Inverkehrbringer:"
-        y = wrapText(
-          ctx4,
-          "Inverkehrbringer:",
-          x,
-          y,
-          maxWidth,
-          lineHeight,
-          true,
-        );
+          x = img.width - 650;
+          y = img.height - 110;
+          maxWidth = 400;
+          lineHeight = 30;
 
-        // Normal text (address)
-        y = wrapText(ctx4, companyName, x, y, maxWidth, lineHeight);
-        y = wrapText(ctx4, companyStreet, x, y, maxWidth, lineHeight);
-        y = wrapText(
-          ctx4,
-          companyZipCode + " " + companyCity,
-          x,
-          y,
-          maxWidth,
-          lineHeight,
-        );
+          // Bold title: "Inverkehrbringer:"
+          y = wrapText(
+            ctx4,
+            "Inverkehrbringer:",
+            x,
+            y,
+            maxWidth,
+            lineHeight,
+            true,
+          );
 
-        ctx4.restore();
+          // Normal text (address)
+          y = wrapText(ctx4, companyName, x, y, maxWidth, lineHeight);
+          y = wrapText(ctx4, companyStreet, x, y, maxWidth, lineHeight);
+          y = wrapText(
+            ctx4,
+            companyZipCode + " " + companyCity,
+            x,
+            y,
+            maxWidth,
+            lineHeight,
+          );
 
-        // Calculate preview size (half screen width while keeping aspect ratio)
-        const previewWidth = 4130 * scaleFactor + 30;
-        const aspectRatio = previewWidth / img.width;
-        const previewHeight = img.height * aspectRatio;
+          ctx4.restore();
 
-        // Set preview canvas size
-        previewCanvas4Ref.current.width = previewWidth;
-        previewCanvas4Ref.current.height = previewHeight;
+          // Calculate preview size (half screen width while keeping aspect ratio)
+          const previewWidth = 4130 * scaleFactor + 30;
+          const aspectRatio = previewWidth / img.width;
+          const previewHeight = img.height * aspectRatio;
 
-        // Draw the scaled image onto the preview canvas
-        previewCtx4.scale(aspectRatio, aspectRatio);
-        if (canvasRef4) {
-          previewCtx4.drawImage(canvasRef4.current, 0, 0);
+          // Set preview canvas size
+          previewCanvas4Ref.current.width = previewWidth;
+          previewCanvas4Ref.current.height = previewHeight;
+
+          // Draw the scaled image onto the preview canvas
+          previewCtx4.scale(aspectRatio, aspectRatio);
+          if (canvasRef4) {
+            previewCtx4.drawImage(canvasRef4.current, 0, 0);
+          }
         }
       }
     }
@@ -644,6 +663,7 @@ export default function Canvas({
     companyStreet,
     companyZipCode,
     companyCity,
+    banderole,
   ]);
 
   return (
