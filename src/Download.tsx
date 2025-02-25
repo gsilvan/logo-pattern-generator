@@ -63,22 +63,6 @@ export default function DownloadCanvas({
     });
   }
 
-  // // Function to download selected canvases as PNGs
-  // function downloadSelectedCanvasesAsPng() {
-  //   canvasesToDownload.forEach((index) => {
-  //     const canvas = canvasRefs[index - 1]?.current;
-  //     if (canvas) downloadCanvasAsPng(canvas, `canvas-${index}.png`);
-  //   });
-  // }
-
-  // // Function to download selected canvases as PDFs
-  // function downloadSelectedCanvasesAsPdf() {
-  //   canvasesToDownload.forEach((index) => {
-  //     const canvas = canvasRefs[index - 1]?.current;
-  //     if (canvas) downloadCanvasAsPdf(canvas, `canvas-${index}.pdf`);
-  //   });
-  // }
-
   return (
     <div className="download-btns flex gap-3">
       <div className=" relative inline-block">
@@ -89,6 +73,7 @@ export default function DownloadCanvas({
               downloadCanvasAsPdf(canvasRef1.current, "Muster");
             } else {
               togglePdfDropdown();
+              setShowPngDropdown(false);
             }
           }}
         >
@@ -144,6 +129,7 @@ export default function DownloadCanvas({
               downloadCanvasAsPdf(canvasRef1.current, "Muster");
             } else {
               togglePngDropdown();
+              setShowPdfDropdown(false);
             }
           }}
         >
