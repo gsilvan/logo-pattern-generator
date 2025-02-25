@@ -381,7 +381,7 @@ export default function Canvas({
         ctx3.fillStyle = "black";
 
         let x = cmToPixel(10) - 350;
-        let y = (canvasRef3.current.height - height) / 2 + 50;
+        let y = (canvasRef3.current.height - height) / 2 + 12;
         let maxWidth = 340;
         let lineHeight = 30;
 
@@ -536,7 +536,7 @@ export default function Canvas({
           ctx4.textBaseline = "top";
 
           let x = 240;
-          let y = 50;
+          let y = 12;
           let maxWidth = 360;
           let lineHeight = 30;
 
