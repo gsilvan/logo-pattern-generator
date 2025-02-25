@@ -380,9 +380,9 @@ export default function Canvas({
         ctx3.textBaseline = "top";
         ctx3.fillStyle = "black";
 
-        let x = cmToPixel(10) - 420;
+        let x = cmToPixel(10) - 350;
         let y = (canvasRef3.current.height - height) / 2 + 50;
-        let maxWidth = 400;
+        let maxWidth = 340;
         let lineHeight = 30;
 
         // Bold Title: "Anleitung:"
@@ -535,9 +535,9 @@ export default function Canvas({
           ctx4.textAlign = "left";
           ctx4.textBaseline = "top";
 
-          let x = 200;
+          let x = 240;
           let y = 50;
-          let maxWidth = 400;
+          let maxWidth = 360;
           let lineHeight = 30;
 
           // Bold Title: "Anleitung:"
@@ -599,9 +599,9 @@ export default function Canvas({
           ctx4.textAlign = "left";
           ctx4.textBaseline = "bottom";
 
-          x = img.width - 650;
+          x = img.width - 675;
           y = img.height - 110;
-          maxWidth = 400;
+          maxWidth = 340;
           lineHeight = 30;
 
           // Bold title: "Inverkehrbringer:"
