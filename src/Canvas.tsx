@@ -145,7 +145,7 @@ export default function Canvas({
   const coordinateSystemContainerDivStyle = {
     height: `${4130 * scaleFactor + 5}px`,
     width: `${4130 * scaleFactor + 5}px`,
-    display: isPacked ? "none" : "block",
+    display: isPacked ? "none" : "flex",
   };
   const coordinateSystemContainerPackedDivStyle: CSSProperties = {
     height: `${4130 * scaleFactor + 5}px`,
