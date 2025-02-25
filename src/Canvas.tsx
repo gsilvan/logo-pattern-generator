@@ -438,7 +438,7 @@ export default function Canvas({
 
         x = 50;
         y = (canvasRef3.current.height - height) / 2 + height - 150;
-        maxWidth = 400;
+        maxWidth = 340;
         lineHeight = 30;
 
         // Bold title: "Inverkehrbringer:"
@@ -537,7 +537,7 @@ export default function Canvas({
 
           let x = 240;
           let y = 12;
-          let maxWidth = 360;
+          let maxWidth = 340;
           let lineHeight = 30;
 
           // Bold Title: "Anleitung:"
