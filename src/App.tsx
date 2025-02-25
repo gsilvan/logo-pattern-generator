@@ -156,6 +156,9 @@ function App() {
     setSelectedSetting(1);
 
     setIsPacked(!isPacked);
+    window.scrollTo({
+      top: 0,
+    });
   };
 
   const canvasMaxSize = window.screen.width < 900 ? 34 : 35;
