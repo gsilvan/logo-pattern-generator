@@ -104,7 +104,7 @@ export default function Canvas({
 
   const banderole = useMemo(() => {
     const img = new Image();
-    img.src = "/banderole/path3.png";
+    img.src = "/banderole/banderole.png";
     img.onload = () => {};
     return img;
   }, []);
@@ -294,13 +294,15 @@ export default function Canvas({
 
         ctx2.save();
 
+        ctx2.beginPath();
+        ctx2.rect(0, centerY, width, height);
+        ctx2.clip();
+
         let logoWidth = blLogoTargetWidth;
         let logoHeight =
           (banderoleLogo.height / banderoleLogo.width) * logoWidth;
-        if (logoHeight > 554) {
-          logoHeight = 554;
-          logoWidth = (banderoleLogo.width / banderoleLogo.height) * logoHeight;
-        }
+
+        logoWidth = (banderoleLogo.width / banderoleLogo.height) * logoHeight;
 
         const logoX = (cmToPixel(10) - logoWidth) / 2 + blXPosition;
         const logoY = (canvasSize.height / 2 - logoHeight) / 2 + blYPosition;
@@ -477,7 +479,7 @@ export default function Canvas({
 
       if (ctx4 && previewCtx4) {
         const img = banderole;
-        img.src = "/banderole/path3.png";
+        img.src = "/banderole/banderole.png";
 
         // Set the original canvas to the exact image size
 
@@ -490,15 +492,27 @@ export default function Canvas({
 
           ctx4.restore();
           ctx4.save(); // Save canvas state
+          // Define the clipping region
+          const clipWidth = cmToPixel(10); // 1/4 left and 1/4 right makes up the half width of canvas
+          const clipHeight = img.height; // Use the full height of the canvas
+
+          // Define the clipping area from the center of the canvas
+          const clipX = cmToPixel(6.5);
+          const clipY = 0; // Start from the top of the canvas (0)
+
+          // Begin defining the clipping region
+          ctx4.beginPath();
+          ctx4.rect(clipX, clipY, clipWidth, clipHeight); // Create the clipping rectangle
+          ctx4.clip(); // Apply the clipping path
+
+          // Now you can continue drawing on the canvas, and anything outside of the clipping region will be hidden
 
           let logoWidth = blLogoTargetWidth;
           let logoHeight =
             (banderoleLogo.height / banderoleLogo.width) * logoWidth;
-          if (logoHeight > 554) {
-            logoHeight = 554;
-            logoWidth =
-              (banderoleLogo.width / banderoleLogo.height) * logoHeight;
-          }
+
+          logoWidth = (banderoleLogo.width / banderoleLogo.height) * logoHeight;
+
           const logoX = (img.width - logoWidth) / 2 + blXPosition;
           const logoY = (img.height - logoHeight) / 2 + blYPosition;
           // Move pivot point to center of logo

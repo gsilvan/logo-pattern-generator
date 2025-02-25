@@ -96,7 +96,6 @@ function App() {
     // Function to update the state with the new window width
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
-      console.log(windowWidth);
     };
 
     // Add event listener to listen for resize events
@@ -157,7 +156,6 @@ function App() {
     setSelectedSetting(1);
 
     setIsPacked(!isPacked);
-    console.log(isPackedEl);
   };
 
   const canvasMaxSize = window.screen.width < 900 ? 34 : 35;
