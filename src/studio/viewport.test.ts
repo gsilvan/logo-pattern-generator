@@ -34,7 +34,7 @@ describe('shared viewport geometry', () => {
     expect(hitRepeat(project, { x: 0, y: 40 })?.id).toBe('leaf');
   });
   it('handles motifs wider than a tile and avoids unbounded work for tiny imported tiles', () => {
-    expect(hitRepeat({ ...initialProject, motifs: [{ ...motif, widthMm: 250 }] }, { x: 90, y: 40 })).toEqual({ id: 'leaf', dx: 100, dy: 0 });
+    expect(hitRepeat({ ...initialProject, motifs: [{ ...motif, widthMm: 250 }] }, { x: 90, y: 40 })).toEqual({ id: 'leaf', dx: 60, dy: 0 });
     expect(hitRepeat({ ...initialProject, tileWidthMm: 0.0001, motifs: [motif] }, { x: 1, y: 40 })).toBeNull();
   });
 });

@@ -20,6 +20,10 @@ try {
   };
   await page.goto(process.env.APP_URL || 'http://127.0.0.1:5173/');
   await page.locator('.upper-canvas').waitFor();
+  assert.deepEqual([(await state()).project.tileWidthMm, (await state()).project.tileHeightMm], [60, 60]);
+  assert.deepEqual([(await state()).project.sheetWidthMm, (await state()).project.sheetHeightMm], [300, 300]);
+  // Use a 10 cm repeat tile below for repeat-interaction geometry scenarios.
+  await field('Kachelbreite', 10); await field('Kachelhöhe', 10);
   assert.equal(await page.locator('[data-testid=sheet-guide]').count(), 1);
   const artwork = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><path d="M40 360Q-20 0 360 40Q400 400 40 360" fill="#2a8269"/><path d="M40 360L260 140" stroke="#fff" stroke-width="12"/></svg>');
   await page.getByLabel('Motiv hochladen', { exact: true }).setInputFiles({ name: 'Blatt.svg', mimeType: 'image/svg+xml', buffer: artwork });
@@ -93,11 +97,11 @@ try {
   assert.ok((await state()).project.motifs.every(m => Math.abs(m.rotation) > 5), 'Group rotation did not affect both motifs');
   const tile = await download('Kachel PNG'); assert.equal(tile.subarray(1, 4).toString(), 'PNG'); assert.ok(!tile.equals(originalTile));
   const sheet = await download('Tuch PNG');
-  assert.equal(sheet.readUInt32BE(16), 2953); assert.equal(sheet.readUInt32BE(20), 2953);
+  assert.equal(sheet.readUInt32BE(16), 3543); assert.equal(sheet.readUInt32BE(20), 3543);
   const resolutionIndex = sheet.indexOf(Buffer.from('pHYs')); assert.ok(resolutionIndex > 0); assert.equal(sheet.readUInt32BE(resolutionIndex + 4), 11811);
   const pdf = await download('Tuch PDF'); assert.equal(pdf.subarray(0, 4).toString(), '%PDF');
   const media = pdf.toString('latin1').match(/\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]/);
-  assert.ok(media && Math.abs(Number(media[1]) - 250 / 25.4 * 72) < 0.2 && Math.abs(Number(media[2]) - 250 / 25.4 * 72) < 0.2);
+  assert.ok(media && Math.abs(Number(media[1]) - 300 / 25.4 * 72) < 0.2 && Math.abs(Number(media[2]) - 300 / 25.4 * 72) < 0.2);
   const edgePixels = await page.evaluate(async () => {
     const { renderTile } = await import('/src/studio/render.ts'); const { useStudio } = await import('/src/studio/store.ts');
     const source = document.createElement('canvas'); source.width = 2; source.height = 2; source.getContext('2d').fillStyle = '#f00'; source.getContext('2d').fillRect(0, 0, 2, 2);
@@ -130,6 +134,8 @@ try {
   await page.getByRole('button', { name: 'Neues Projekt starten', exact: true }).click();
   await page.getByRole('status').filter({ hasText: 'Neues Projekt gestartet.' }).waitFor();
   assert.equal((await state()).project.motifs.length, 0); assert.equal((await state()).past, 0);
+  assert.deepEqual([(await state()).project.tileWidthMm, (await state()).project.tileHeightMm], [60, 60]);
+  assert.deepEqual([(await state()).project.sheetWidthMm, (await state()).project.sheetHeightMm], [300, 300]);
   await page.locator('.projectMenu summary').click();
   await page.getByLabel('Projekt öffnen', { exact: true }).setInputFiles({ name: 'project.zip', mimeType: 'application/zip', buffer: zipBytes });
   await page.getByRole('status').filter({ hasText: 'Fertig.' }).waitFor();
@@ -186,14 +192,14 @@ try {
   await fallback.waitForFunction(() => {
     const host = document.querySelector('.canvasViewport'), canvas = [...document.querySelectorAll('.patternSurface canvas')].at(-1);
     if (!host || !canvas) return false;
-    const x = Number(host.dataset.offsetX) + 55 * Number(host.dataset.scale), y = Number(host.dataset.offsetY) + 50 * Number(host.dataset.scale);
+    const x = Number(host.dataset.offsetX) + 30 * Number(host.dataset.scale), y = Number(host.dataset.offsetY) + 30 * Number(host.dataset.scale);
     const pixel = canvas.getContext('2d').getImageData(Math.round(x), Math.round(y), 1, 1).data;
     return pixel[1] > pixel[0] * 1.5 && pixel[3] === 255;
   });
   await fallback.getByRole('button', { name: 'Ebene ausblenden: Blatt.svg', exact: true }).click();
   await fallback.waitForFunction(() => {
     const host = document.querySelector('.canvasViewport'), canvas = [...document.querySelectorAll('.patternSurface canvas')].at(-1);
-    const x = Number(host.dataset.offsetX) + 55 * Number(host.dataset.scale), y = Number(host.dataset.offsetY) + 50 * Number(host.dataset.scale);
+    const x = Number(host.dataset.offsetX) + 30 * Number(host.dataset.scale), y = Number(host.dataset.offsetY) + 30 * Number(host.dataset.scale);
     const pixel = canvas.getContext('2d').getImageData(Math.round(x), Math.round(y), 1, 1).data;
     return pixel[0] > 240 && pixel[1] > 240;
   });

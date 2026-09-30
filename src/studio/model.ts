@@ -19,7 +19,7 @@ export type Project = {
   backgroundColor: string; backgroundAssetId: string | null; assets: Asset[]; motifs: Motif[]; packaging: Packaging;
 };
 export const initialProject: Project = {
-  version: 1, sheetWidthMm: 250, sheetHeightMm: 250, tileWidthMm: 100, tileHeightMm: 100,
+  version: 1, sheetWidthMm: 300, sheetHeightMm: 300, tileWidthMm: 60, tileHeightMm: 60,
   backgroundColor: '#fffdf8', backgroundAssetId: null, assets: [], motifs: [],
   packaging: { logoAssetId: null, logoWidthMm: 35, logoXMm: 50, logoYMm: 61, logoRotation: 0, company: '', street: '', zip: '', city: '' },
 };
