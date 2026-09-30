@@ -7,7 +7,7 @@ function enqueuePersistence(operation: () => Promise<unknown>) { persistence = p
 const PROJECT_KEY = 'musterersteller-project';
 const LEGACY_PROJECT_KEY = 'bergtuch-project';
 function persistProject(project: Project) { return enqueuePersistence(() => set(PROJECT_KEY, project)); }
-function clearPersistedProject() { return enqueuePersistence(async () => { await del(PROJECT_KEY); await del(LEGACY_PROJECT_KEY); }); } }
+function clearPersistedProject() { return enqueuePersistence(async () => { await del(PROJECT_KEY); await del(LEGACY_PROJECT_KEY); }); }
 type State = { draft: Project | null; beginTransform: () => void; previewTransform: (project: Project) => void; commitTransform: () => void; cancelTransform: () => void; ready: boolean; project: Project; past: Project[]; future: Project[]; selectedId: string | null; selectedIds: string[]; setProject: (p: Project) => void; update: (fn: (p: Project) => Project) => void; undo: () => void; redo: () => void; select: (id: string | null) => void; selectMany: (ids: string[]) => void; restore: () => Promise<void>; newSession: () => Promise<void> };
 export const useStudio = create<State>((setState, getState) => ({
   draft: null,
