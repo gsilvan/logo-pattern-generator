@@ -58,7 +58,7 @@ export function App(){
   const effectivePpi=selected&&project.assets.find(a=>a.id===selected.assetId)?.width ? Math.round(project.assets.find(a=>a.id===selected.assetId)!.width/(selected.widthMm/25.4)) : null;
   return <div className="appShell">
     <header className="topbar">
-      <span className="brand">bergtuch <span>Musterstudio</span></span>
+      <span className="brand">Musterersteller</span>
       <details className="projectMenu"><summary>Projekt</summary><div className="menuPanel">
         <button disabled={!ready||busy} onClick={e=>{e.currentTarget.closest('details')?.removeAttribute('open');requestNewSession();}}>Neues Projekt starten…</button>
         <button disabled={busy} onClick={()=>void run(()=>saveProject(project))}>Projekt speichern</button>

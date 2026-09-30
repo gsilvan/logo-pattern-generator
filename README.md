@@ -1,4 +1,4 @@
-# Bergtuch Musterstudio
+# Musterersteller
 
 Browser-based editor for seamless beeswax-wrap patterns and their packaging.
 

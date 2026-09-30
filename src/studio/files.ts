@@ -32,7 +32,7 @@ export async function readAsset(file:File):Promise<Asset> {
 function fileAsDataUrl(file:Blob):Promise<string>{return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(r.error);r.readAsDataURL(file);});}
 export async function exportPng(p:Project,kind:'tile'|'sheet'|'front'|'back'|'band',ppi=300,signal?:AbortSignal) {
   const canvas=kind==='tile'?await renderTile(p,ppi,true,signal):kind==='sheet'?await renderSheet(p,ppi,signal):await renderPackaging(p,kind,ppi);
-  const blob=await canvasToPrintPng(canvas,ppi);signal?.throwIfAborted();downloadBlob(blob,`Bergtuch_${kind}_${ppi}ppi.png`);
+  const blob=await canvasToPrintPng(canvas,ppi);signal?.throwIfAborted();downloadBlob(blob,`Musterersteller_${kind}_${ppi}ppi.png`);
 }
 export async function exportPdf(p:Project,kind:'sheet'|'front'|'back'|'band',ppi=300,signal?:AbortSignal) {
   const canvas=kind==='sheet'?await renderSheet(p,ppi,signal):await renderPackaging(p,kind,ppi);
@@ -41,11 +41,11 @@ export async function exportPdf(p:Project,kind:'sheet'|'front'|'back'|'band',ppi
   const {jsPDF}=await import('jspdf');
   const pdf=new jsPDF({unit:'mm',format:[w,h],orientation:w>h?'landscape':'portrait',compress:true});
   const blob=await canvasToPrintPng(canvas,ppi);const url=await new Promise<string>((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result));r.onerror=()=>rej(r.error);r.readAsDataURL(blob);});
-  signal?.throwIfAborted();pdf.addImage(url,'PNG',0,0,w,h,undefined,'FAST');signal?.throwIfAborted();downloadBlob(pdf.output('blob'),`Bergtuch_${kind}_${ppi}ppi.pdf`);
+  signal?.throwIfAborted();pdf.addImage(url,'PNG',0,0,w,h,undefined,'FAST');signal?.throwIfAborted();downloadBlob(pdf.output('blob'),`Musterersteller_${kind}_${ppi}ppi.pdf`);
 }
 export async function saveProject(p:Project) {
   const {default:JSZip}=await import('jszip');
-  const zip=new JSZip();zip.file('project.json',JSON.stringify(p));downloadBlob(await zip.generateAsync({type:'blob',compression:'DEFLATE'}),'Bergtuch_Projekt.zip');
+  const zip=new JSZip();zip.file('project.json',JSON.stringify(p));downloadBlob(await zip.generateAsync({type:'blob',compression:'DEFLATE'}),'Musterersteller_Projekt.zip');
 }
 export async function openProject(file:File):Promise<Project> {
   if(file.size>150_000_000) throw new Error('Projektdatei ist zu groß.');
