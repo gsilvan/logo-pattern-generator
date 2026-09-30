@@ -788,7 +788,12 @@ export function App() {
       <footer className="statusbar">
         <span role="status">{message || 'Bereit'}</span>
         {busy && <button onClick={() => activeExport.current?.abort()}>Abbrechen</button>}
-        <span className="storageHint">Lokale Speicherung im Browser</span>
+        <div className="statusLinks">
+          <a className="legalLink" href={`${import.meta.env.BASE_URL}impressum.html`}>
+            Impressum
+          </a>
+          <span className="storageHint">Lokale Speicherung im Browser</span>
+        </div>
       </footer>
       {showExport && (
         <Dialog

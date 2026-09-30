@@ -548,8 +548,23 @@ h2 {
   font-size: 11px;
   padding: 1px 5px;
 }
-.storageHint {
+.statusLinks {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.legalLink {
+  color: inherit;
+  text-decoration: none;
+}
+.legalLink:hover {
+  color: #27303d;
+  text-decoration: underline;
+}
+.legalLink:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }
 .packGrid {
   height: 100%;
@@ -695,7 +710,7 @@ h2 {
   .packGrid {
     padding: 16px;
   }
-  .storageHint {
+  .statusbar .storageHint {
     display: none;
   }
 }
