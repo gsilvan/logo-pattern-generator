@@ -24,7 +24,7 @@ For browser checks, start `npm run dev` in another terminal first. Set `CHROMIUM
 
 ## Code Style and Architecture
 
-The app uses React, strict TypeScript, Vite, Fabric.js, PixiJS, and Zustand. Keep document geometry in millimetres; convert to centimetres for user input and pixels only at rendering/export boundaries. Keep Fabric and Pixi instances as views of the saved project model. Use PascalCase for React component files and types, camelCase for functions and values, and short descriptive module filenames such as `render.ts` or `model.ts`. Match the surrounding formatting; there is no formatter or lint command in `package.json`.
+The app uses React, strict TypeScript, Vite, Fabric.js, PixiJS, and Zustand. Keep document geometry in millimetres; convert to centimetres for user input and pixels only at rendering/export boundaries. Keep Fabric and Pixi instances as views of the saved project model. Use PascalCase for React component files and types, camelCase for functions and values, and short descriptive module filenames such as `render.ts` or `model.ts`. Format changed code with Prettier before validation (for example, `npx prettier --write <changed-files>`).
 
 ## Testing Guidelines
 
@@ -34,7 +34,7 @@ Add focused Vitest cases for geometry, project validation, and export metadata. 
 
 Use precise Conventional Commit messages, preferably a single concise line. Avoid verbose subjects and body text. For example: `feat: add new project action` or `fix: preserve PNG print resolution`. Pull requests should describe user-visible behavior, list validation commands and results, link related issues when applicable, and include screenshots for UI changes. Mention print-size or export changes explicitly.
 
-Create commits only when explicitly instructed by the user. Leave completed changes uncommitted otherwise.
+Create commits only when explicitly instructed by the user. Before any commit, format changed code with Prettier, run `npm test`, then run `npm run build`, in that order. Commit only if formatting, tests, and build all succeed; otherwise fix the problem and repeat the sequence. Leave completed changes uncommitted otherwise.
 
 ## User-Facing Copy
 
