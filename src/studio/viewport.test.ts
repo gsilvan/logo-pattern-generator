@@ -1,11 +1,25 @@
 import { describe, it, expect } from 'vitest';
 import { BASE_SCALE, fitView, hitRepeat, screenToWorld, worldToScreen, zoomAt } from './viewport';
 import { initialProject, type Motif } from './model';
-const motif: Motif = { id: 'leaf', assetId: 'asset', name: 'Blatt', xMm: 0, yMm: 40, widthMm: 20, heightMm: 10, rotation: 0, opacity: 1, visible: true, locked: false };
+const motif: Motif = {
+  id: 'leaf',
+  assetId: 'asset',
+  name: 'Blatt',
+  xMm: 0,
+  yMm: 40,
+  widthMm: 20,
+  heightMm: 10,
+  rotation: 0,
+  opacity: 1,
+  visible: true,
+  locked: false,
+};
 describe('shared viewport geometry', () => {
   it('keeps the world point under the pointer fixed when zooming a panned view', () => {
-    const view = { scale: 2, x: -137, y: 42 }, pointer = { x: 431, y: 218 };
-    const world = screenToWorld(pointer, view), zoomed = zoomAt(view, pointer, 8);
+    const view = { scale: 2, x: -137, y: 42 },
+      pointer = { x: 431, y: 218 };
+    const world = screenToWorld(pointer, view),
+      zoomed = zoomAt(view, pointer, 8);
     expect(worldToScreen(world, zoomed)).toEqual(pointer);
     expect(screenToWorld(pointer, zoomed)).toEqual(world);
   });
@@ -25,7 +39,10 @@ describe('shared viewport geometry', () => {
   });
   it('respects rotated bounds, layer order, visibility and locks', () => {
     const rotated = { ...motif, rotation: 90 };
-    const project = { ...initialProject, motifs: [rotated, { ...rotated, id: 'top', locked: true }] };
+    const project = {
+      ...initialProject,
+      motifs: [rotated, { ...rotated, id: 'top', locked: true }],
+    };
     expect(hitRepeat(project, { x: 0, y: 49 })?.id).toBe('leaf');
     expect(hitRepeat(project, { x: 9, y: 40 })).toBeNull();
     project.motifs[1].locked = false;
@@ -34,7 +51,11 @@ describe('shared viewport geometry', () => {
     expect(hitRepeat(project, { x: 0, y: 40 })?.id).toBe('leaf');
   });
   it('handles motifs wider than a tile and avoids unbounded work for tiny imported tiles', () => {
-    expect(hitRepeat({ ...initialProject, motifs: [{ ...motif, widthMm: 250 }] }, { x: 90, y: 40 })).toEqual({ id: 'leaf', dx: 60, dy: 0 });
-    expect(hitRepeat({ ...initialProject, tileWidthMm: 0.0001, motifs: [motif] }, { x: 1, y: 40 })).toBeNull();
+    expect(
+      hitRepeat({ ...initialProject, motifs: [{ ...motif, widthMm: 250 }] }, { x: 90, y: 40 }),
+    ).toEqual({ id: 'leaf', dx: 60, dy: 0 });
+    expect(
+      hitRepeat({ ...initialProject, tileWidthMm: 0.0001, motifs: [motif] }, { x: 1, y: 40 }),
+    ).toBeNull();
   });
 });

@@ -1,4 +1,4 @@
-import { PPI } from "./studio/model";
+import { PPI } from './studio/model';
 
 const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
 const PNG_PIXELS_PER_METER_PER_PPI = 1 / 0.0254;
@@ -34,9 +34,12 @@ function crc32(bytes: Uint8Array): number {
 function encodeChunk(type: string, data: Uint8Array): Uint8Array {
   const chunk = new Uint8Array(12 + data.length);
   const view = new DataView(chunk.buffer);
-  const typeBytes = Uint8Array.from(
-    [type.charCodeAt(0), type.charCodeAt(1), type.charCodeAt(2), type.charCodeAt(3)],
-  );
+  const typeBytes = Uint8Array.from([
+    type.charCodeAt(0),
+    type.charCodeAt(1),
+    type.charCodeAt(2),
+    type.charCodeAt(3),
+  ]);
 
   view.setUint32(0, data.length);
   chunk.set(typeBytes, 4);
@@ -57,21 +60,21 @@ export function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
       if (blob) {
         resolve(blob);
       } else {
-        reject(new Error("Der Browser konnte das PNG nicht erzeugen."));
+        reject(new Error('Der Browser konnte das PNG nicht erzeugen.'));
       }
-    }, "image/png");
+    }, 'image/png');
   });
 }
 
 /** Adds print-size metadata while leaving every decoded pixel unchanged. */
 export async function setPngResolution(blob: Blob, ppi = OUTPUT_PPI): Promise<Blob> {
   if (!Number.isFinite(ppi) || ppi <= 0) {
-    throw new Error("Die PNG-Auflösung muss größer als 0 sein.");
+    throw new Error('Die PNG-Auflösung muss größer als 0 sein.');
   }
 
   const bytes = new Uint8Array(await blob.arrayBuffer());
   if (!hasPngSignature(bytes)) {
-    throw new Error("Die Bilddatei ist kein gültiges PNG.");
+    throw new Error('Die Bilddatei ist kein gültiges PNG.');
   }
 
   const chunks: Array<{ type: string; start: number; end: number }> = [];
@@ -83,7 +86,7 @@ export async function setPngResolution(blob: Blob, ppi = OUTPUT_PPI): Promise<Bl
     const length = view.getUint32(offset);
     const chunkEnd = offset + 12 + length;
     if (chunkEnd > bytes.length) {
-      throw new Error("Das PNG enthält einen unvollständigen Datenblock.");
+      throw new Error('Das PNG enthält einen unvollständigen Datenblock.');
     }
 
     const type = String.fromCharCode(
@@ -93,13 +96,13 @@ export async function setPngResolution(blob: Blob, ppi = OUTPUT_PPI): Promise<Bl
       bytes[offset + 7],
     );
     chunks.push({ type, start: offset, end: chunkEnd });
-    hasResolutionChunk ||= type === "pHYs";
+    hasResolutionChunk ||= type === 'pHYs';
     offset = chunkEnd;
-    if (type === "IEND") break;
+    if (type === 'IEND') break;
   }
 
-  if (offset !== bytes.length || chunks.length === 0 || chunks[0].type !== "IHDR") {
-    throw new Error("Das PNG ist beschädigt oder unvollständig.");
+  if (offset !== bytes.length || chunks.length === 0 || chunks[0].type !== 'IHDR') {
+    throw new Error('Das PNG ist beschädigt oder unvollständig.');
   }
 
   const pixelsPerMeter = Math.round(ppi * PNG_PIXELS_PER_METER_PER_PPI);
@@ -108,13 +111,13 @@ export async function setPngResolution(blob: Blob, ppi = OUTPUT_PPI): Promise<Bl
   resolutionView.setUint32(0, pixelsPerMeter);
   resolutionView.setUint32(4, pixelsPerMeter);
   resolutionData[8] = 1; // Resolution unit: meter.
-  const resolutionChunk = encodeChunk("pHYs", resolutionData);
+  const resolutionChunk = encodeChunk('pHYs', resolutionData);
 
   const output: Uint8Array[] = [bytes.subarray(0, PNG_SIGNATURE.length)];
   let resolutionWritten = false;
 
   for (const chunk of chunks) {
-    if (chunk.type === "pHYs") {
+    if (chunk.type === 'pHYs') {
       if (!resolutionWritten) {
         output.push(resolutionChunk);
         resolutionWritten = true;
@@ -123,13 +126,16 @@ export async function setPngResolution(blob: Blob, ppi = OUTPUT_PPI): Promise<Bl
     }
 
     output.push(bytes.subarray(chunk.start, chunk.end));
-    if (chunk.type === "IHDR" && !hasResolutionChunk) {
+    if (chunk.type === 'IHDR' && !hasResolutionChunk) {
       output.push(resolutionChunk);
       resolutionWritten = true;
     }
   }
 
-  return new Blob(output.map(part => Uint8Array.from(part).buffer), { type: "image/png" });
+  return new Blob(
+    output.map((part) => Uint8Array.from(part).buffer),
+    { type: 'image/png' },
+  );
 }
 
 export async function canvasToPrintPng(canvas: HTMLCanvasElement, ppi = OUTPUT_PPI): Promise<Blob> {
@@ -138,7 +144,7 @@ export async function canvasToPrintPng(canvas: HTMLCanvasElement, ppi = OUTPUT_P
 
 export function downloadBlob(blob: Blob, fileName: string): void {
   const objectUrl = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+  const link = document.createElement('a');
   link.href = objectUrl;
   link.download = fileName;
   link.click();
