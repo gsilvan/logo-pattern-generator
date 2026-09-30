@@ -105,12 +105,12 @@ export function App(){
             <div className="row"><button onClick={()=>{const copy={...selected,id:crypto.randomUUID(),groupId:undefined,xMm:selected.xMm+5,yMm:selected.yMm+5};update(p=>({...p,motifs:[...p.motifs,copy]}));select(copy.id);}}>Duplizieren</button><button onClick={()=>deleteLayer(selected.id)}>Ebene löschen</button></div></>}
             {selectedIds.length>1&&<p className="hint">Gemeinsam auf der Arbeitsfläche bewegen, drehen und skalieren.</p>}
           </section>}
-          <details className="settingsSection"><summary>Hintergrund</summary><div>
+          <section className="settingsSection"><h2>Hintergrund</h2>
             <label className="field colorField"><span>Farbe</span><input aria-label="Hintergrundfarbe" type="color" value={project.backgroundColor} onChange={e=>update(p=>({...p,backgroundColor:e.target.value}))}/></label>
             <label className="uploadButton secondary">Hintergrundbild hochladen<input aria-label="Hintergrundbild hochladen" type="file" disabled={busy} accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf" onChange={e=>void upload(e,'background')}/></label>
             <div className="backgrounds">{backgrounds.map((src,i)=><button key={src} title={`Vorlage ${i+1}`} disabled={busy} onClick={()=>void run(async()=>{const blob=await (await fetch(src)).blob();const a=await readAsset(new File([blob],`Design ${i+1}.png`,{type:'image/png'}));update(p=>({...p,assets:[...p.assets,a],backgroundAssetId:a.id}));})}><img src={src} alt={`Hintergrund ${i+1}`}/></button>)}</div>
             {project.backgroundAssetId&&<button onClick={()=>update(p=>({...p,backgroundAssetId:null}))}>Hintergrundbild entfernen</button>}
-          </div></details>
+          </section>
         </>:<>
           <section><h2>Banderole</h2><label className="uploadButton">+ Logo hochladen<input aria-label="Logo hochladen" type="file" disabled={busy} accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf" onChange={e=>void upload(e,'logo')}/></label><div className="fieldGrid">
             {editNumber('Logobreite',project.packaging.logoWidthMm/10,n=>updatePack('logoWidthMm',cmToMm(n)),0.2,10)}{editNumber('Drehung',project.packaging.logoRotation,n=>updatePack('logoRotation',n),-36000,36000,1,'°')}{editNumber('Position X',project.packaging.logoXMm/10,n=>updatePack('logoXMm',cmToMm(n)),-20,30)}{editNumber('Position Y',project.packaging.logoYMm/10,n=>updatePack('logoYMm',cmToMm(n)),-20,30)}
