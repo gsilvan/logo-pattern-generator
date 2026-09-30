@@ -23,9 +23,14 @@ export function makeCanvas(width: number, height: number): HTMLCanvasElement {
   return canvas;
 }
 function assetFor(p: Project, id: string | null) { return p.assets.find(a => a.id === id); }
-export async function renderTile(p: Project, ppi: number, transparent = false, signal?:AbortSignal): Promise<HTMLCanvasElement> {
+export async function renderTile(p: Project, ppi: number, transparent = false, signal?:AbortSignal, target?: HTMLCanvasElement): Promise<HTMLCanvasElement> {
   const w = mmToPx(p.tileWidthMm, ppi), h = mmToPx(p.tileHeightMm, ppi);
-  const canvas = makeCanvas(w,h), ctx = canvas.getContext('2d')!;
+  const canvas = target ?? makeCanvas(w,h);
+  if (canvas.width !== w) canvas.width = w;
+  if (canvas.height !== h) canvas.height = h;
+  const ctx = canvas.getContext('2d')!;
+  ctx.globalAlpha = 1;
+  ctx.clearRect(0, 0, w, h);
   if (!transparent) { ctx.fillStyle = p.backgroundColor; ctx.fillRect(0,0,w,h); }
   const background = assetFor(p,p.backgroundAssetId);
   if (background) {
