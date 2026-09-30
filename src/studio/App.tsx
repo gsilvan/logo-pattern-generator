@@ -51,6 +51,7 @@ export function App(){
     });event.target.value='';
   }
   function deleteLayer(id:string){update(p=>({...p,motifs:p.motifs.filter(m=>m.id!==id)}));if(selectedIds.includes(id))select(null);}
+  function requestNewSession(){setSessionError('');setShowNewSession(true);}
   async function startNewSession(){setBusy(true);setSessionError('');try{await newSession();setTab('pattern');setToolsOpen(false);setSession(n=>n+1);setPpi(300);setGrid({width:30,xGap:10,yGap:10,stagger:20});setMessage('Neues Projekt gestartet.');setShowNewSession(false);}catch{setSessionError('Die lokale Sicherung konnte nicht gelöscht werden. Bitte erneut versuchen.');}finally{setBusy(false);}}
   function changeMotif(fn:(m:Motif)=>Motif){if(!selectedId)return;update(p=>({...p,motifs:p.motifs.map(m=>m.id===selectedId?fn(m):m)}));}
   function moveLayer(id:string,delta:number){update(p=>{const list=[...p.motifs],i=list.findIndex(m=>m.id===id),j=i+delta;if(i<0||j<0||j>=list.length)return p;[list[i],list[j]]=[list[j],list[i]];return {...p,motifs:list};});}
@@ -62,13 +63,13 @@ export function App(){
     <header className="topbar">
       <span className="brand">bergtuch <span>Musterstudio</span></span>
       <details className="projectMenu"><summary>Projekt</summary><div className="menuPanel">
-        <button disabled={!ready||busy} onClick={e=>{e.currentTarget.closest('details')?.removeAttribute('open');setSessionError('');setShowNewSession(true);}}>Neues Projekt</button>
+        <button disabled={!ready||busy} onClick={e=>{e.currentTarget.closest('details')?.removeAttribute('open');requestNewSession();}}>Neues Projekt starten…</button>
         <button disabled={busy} onClick={()=>void run(()=>saveProject(project))}>Projekt speichern</button>
         <label className="fileButton">Projekt öffnen<input aria-label="Projekt öffnen" type="file" accept=".zip,.json" disabled={busy} onChange={e=>{const f=e.target.files?.[0];if(f)void run(async()=>{setProject(await openProject(f));setSession(n=>n+1);});e.target.value='';e.target.closest('details')?.removeAttribute('open');}}/></label>
       </div></details>
       <div className="historyActions"><button aria-label="Rückgängig" title="Rückgängig · Strg+Z" onClick={undo} disabled={!past.length}>↶</button><button aria-label="Wiederholen" title="Wiederholen · Strg+Umschalt+Z" onClick={redo} disabled={!future.length}>↷</button></div>
       <nav aria-label="Arbeitsbereich"><button aria-pressed={tab==='pattern'} onClick={()=>setTab('pattern')}>Muster</button><button aria-pressed={tab==='packaging'} onClick={()=>setTab('packaging')}>Banderole</button></nav>
-      <div className="headerActions"><button className="toolsToggle" aria-expanded={toolsOpen} onClick={()=>setToolsOpen(!toolsOpen)}>Werkzeuge</button><button className="primary" disabled={!ready} onClick={()=>setShowExport(true)}>Exportieren</button></div>
+      <div className="headerActions"><button className="newProjectButton" disabled={!ready||busy} onClick={requestNewSession}>Neues Projekt</button><button className="toolsToggle" aria-expanded={toolsOpen} onClick={()=>setToolsOpen(!toolsOpen)}>Werkzeuge</button><button className="primary" disabled={!ready} onClick={()=>setShowExport(true)}>Exportieren</button></div>
     </header>
     <main className="layout">
       <div className="workspace">

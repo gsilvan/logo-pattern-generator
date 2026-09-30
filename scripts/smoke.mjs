@@ -121,7 +121,12 @@ try {
   await page.getByRole('button', { name: 'Schließen', exact: true }).click();
   await page.getByRole('button', { name: 'Muster', exact: true }).click();
   // A new session clears document/history and resets the view. Opening old ZIPs still works.
-  await page.locator('.projectMenu summary').click(); await page.getByRole('button', { name: 'Neues Projekt', exact: true }).click();
+  const beforeNewProject = await state();
+  await page.getByRole('button', { name: 'Neues Projekt', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Neues Projekt starten?' }).waitFor();
+  await page.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+  assert.deepEqual((await state()).project, beforeNewProject.project, 'Canceling a new project changed the current project');
+  await page.getByRole('button', { name: 'Neues Projekt', exact: true }).click();
   await page.getByRole('button', { name: 'Neues Projekt starten', exact: true }).click();
   await page.getByRole('status').filter({ hasText: 'Neues Projekt gestartet.' }).waitFor();
   assert.equal((await state()).project.motifs.length, 0); assert.equal((await state()).past, 0);
