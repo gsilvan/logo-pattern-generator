@@ -20,6 +20,8 @@ try {
   };
   await page.goto(process.env.APP_URL || 'http://127.0.0.1:5173/');
   await page.locator('.upper-canvas').waitFor();
+  assert.equal(await page.getByText('Automatisch anordnen', { exact: true }).count(), 0);
+  assert.equal(await page.getByRole('button', { name: 'Als Muster anordnen', exact: true }).count(), 0);
   assert.deepEqual([(await state()).project.tileWidthMm, (await state()).project.tileHeightMm], [60, 60]);
   assert.deepEqual([(await state()).project.sheetWidthMm, (await state()).project.sheetHeightMm], [300, 300]);
   // Use a 10 cm repeat tile below for repeat-interaction geometry scenarios.

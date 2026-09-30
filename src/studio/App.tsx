@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, type ChangeEvent } from 'react';
 import { Workspace } from './Workspace';
 import { Dialog } from './Dialog';
 import { useStudio } from './store';
-import { cmToMm, mmToCm, parseCm, placeGrid, type Motif, type Project } from './model';
+import { cmToMm, mmToCm, parseCm, type Motif, type Project } from './model';
 import { readAsset, exportPng, exportPdf, openProject, saveProject } from './files';
 import { renderPackaging } from './render';
 const backgrounds = Object.values(import.meta.glob('../backgrounds/*.png',{eager:true,query:'?url',import:'default'})) as string[];
@@ -25,10 +25,8 @@ function PackPreview({kind}:{kind:'front'|'back'|'band'}){
 export function App(){
   const project=useStudio(s=>s.project),update=useStudio(s=>s.update),setProject=useStudio(s=>s.setProject),restore=useStudio(s=>s.restore),newSession=useStudio(s=>s.newSession),ready=useStudio(s=>s.ready),undo=useStudio(s=>s.undo),redo=useStudio(s=>s.redo),past=useStudio(s=>s.past),future=useStudio(s=>s.future),selectedId=useStudio(s=>s.selectedId),selectedIds=useStudio(s=>s.selectedIds),select=useStudio(s=>s.select);
   const [tab,setTab]=useState<'pattern'|'packaging'>('pattern'),[toolsOpen,setToolsOpen]=useState(false),[showExport,setShowExport]=useState(false),[session,setSession]=useState(0),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[ppi,setPpi]=useState(300),[showNewSession,setShowNewSession]=useState(false),[sessionError,setSessionError]=useState('');
-  const [grid,setGrid]=useState({width:30,xGap:10,yGap:10,stagger:20});
   const activeExport=useRef<AbortController|null>(null);
   const selected=project.motifs.find(m=>m.id===selectedId);
-  const motifAsset=project.assets.find(a=>a.id===(selected?.assetId??project.motifs.at(-1)?.assetId));
   useEffect(()=>{void restore();},[]);
   useEffect(()=>{
     const closeMenus=(event:PointerEvent)=>{for(const menu of document.querySelectorAll<HTMLDetailsElement>('.projectMenu[open],.viewMenu[open]'))if(!menu.contains(event.target as Node))menu.open=false;};
@@ -52,10 +50,9 @@ export function App(){
   }
   function deleteLayer(id:string){update(p=>({...p,motifs:p.motifs.filter(m=>m.id!==id)}));if(selectedIds.includes(id))select(null);}
   function requestNewSession(){setSessionError('');setShowNewSession(true);}
-  async function startNewSession(){setBusy(true);setSessionError('');try{await newSession();setTab('pattern');setToolsOpen(false);setSession(n=>n+1);setPpi(300);setGrid({width:30,xGap:10,yGap:10,stagger:20});setMessage('Neues Projekt gestartet.');setShowNewSession(false);}catch{setSessionError('Die lokale Sicherung konnte nicht gelöscht werden. Bitte erneut versuchen.');}finally{setBusy(false);}}
+  async function startNewSession(){setBusy(true);setSessionError('');try{await newSession();setTab('pattern');setToolsOpen(false);setSession(n=>n+1);setPpi(300);setMessage('Neues Projekt gestartet.');setShowNewSession(false);}catch{setSessionError('Die lokale Sicherung konnte nicht gelöscht werden. Bitte erneut versuchen.');}finally{setBusy(false);}}
   function changeMotif(fn:(m:Motif)=>Motif){if(!selectedId)return;update(p=>({...p,motifs:p.motifs.map(m=>m.id===selectedId?fn(m):m)}));}
   function moveLayer(id:string,delta:number){update(p=>{const list=[...p.motifs],i=list.findIndex(m=>m.id===id),j=i+delta;if(i<0||j<0||j>=list.length)return p;[list[i],list[j]]=[list[j],list[i]];return {...p,motifs:list};});}
-  function applyGrid(){if(!motifAsset){setMessage('Bitte zuerst ein Motiv hochladen.');return;}try{const pitchX=grid.width+grid.xGap;const pitchY=grid.width*motifAsset.height/motifAsset.width+grid.yGap;const tileWidthMm=pitchX;const tileHeightMm=pitchY*(grid.stagger%pitchX===0?1:2);if(tileWidthMm>350||tileHeightMm>350)throw new Error('Musterabstände ergeben eine zu große Kachel.');const motifs=placeGrid(motifAsset,tileWidthMm,tileHeightMm,grid.width,grid.xGap,grid.yGap,grid.stagger);update(p=>({...p,tileWidthMm,tileHeightMm,motifs}));select(null);setMessage(`${motifs.length} Motive angeordnet.`);}catch(e){setMessage((e as Error).message);}}
   function updateDimension(key:'sheetWidthMm'|'sheetHeightMm'|'tileWidthMm'|'tileHeightMm',cm:number){update(p=>({...p,[key]:cmToMm(cm)}));}
   function updatePack<K extends keyof Project['packaging']>(key:K,value:Project['packaging'][K]){update(p=>({...p,packaging:{...p.packaging,[key]:value}}));}
   const effectivePpi=selected&&project.assets.find(a=>a.id===selected.assetId)?.width ? Math.round(project.assets.find(a=>a.id===selected.assetId)!.width/(selected.widthMm/25.4)) : null;
@@ -113,10 +110,6 @@ export function App(){
             <label className="uploadButton secondary">Hintergrundbild hochladen<input aria-label="Hintergrundbild hochladen" type="file" disabled={busy} accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf" onChange={e=>void upload(e,'background')}/></label>
             <div className="backgrounds">{backgrounds.map((src,i)=><button key={src} title={`Vorlage ${i+1}`} disabled={busy} onClick={()=>void run(async()=>{const blob=await (await fetch(src)).blob();const a=await readAsset(new File([blob],`Design ${i+1}.png`,{type:'image/png'}));update(p=>({...p,assets:[...p.assets,a],backgroundAssetId:a.id}));})}><img src={src} alt={`Hintergrund ${i+1}`}/></button>)}</div>
             {project.backgroundAssetId&&<button onClick={()=>update(p=>({...p,backgroundAssetId:null}))}>Hintergrundbild entfernen</button>}
-          </div></details>
-          <details className="settingsSection"><summary>Automatisch anordnen</summary><div>
-            <div className="fieldGrid">{editNumber('Breite der Anordnung',grid.width/10,n=>setGrid({...grid,width:cmToMm(n)}),0.2,30)}{editNumber('Abstand X',grid.xGap/10,n=>setGrid({...grid,xGap:cmToMm(n)}),0,30)}{editNumber('Abstand Y',grid.yGap/10,n=>setGrid({...grid,yGap:cmToMm(n)}),0,30)}{editNumber('Zeilenversatz',grid.stagger/10,n=>setGrid({...grid,stagger:cmToMm(n)}),0,30)}</div>
-            <button onClick={applyGrid} disabled={!motifAsset}>Als Muster anordnen</button><p className="hint">Verwendet das ausgewählte oder zuletzt hinzugefügte Motiv. Ersetzt alle Motive auf der Kachel; über Rückgängig wiederherstellbar.</p>
           </div></details>
         </>:<>
           <section><h2>Banderole</h2><label className="uploadButton">+ Logo hochladen<input aria-label="Logo hochladen" type="file" disabled={busy} accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf" onChange={e=>void upload(e,'logo')}/></label><div className="fieldGrid">
