@@ -8,12 +8,12 @@ import {
 } from './packagingTemplates';
 
 describe('packaging templates', () => {
-  it('uses the source PDF page dimensions as the starting standard', () => {
+  it('uses nominal page dimensions near the source PDFs', () => {
     expect(packagingTypes.map(({ kind, widthMm, heightMm }) => [kind, widthMm, heightMm])).toEqual([
       ['banderole', 255.002, 66.583],
       ['envelope', 192, 246],
-      ['rigid', 266.7, 472.369],
-      ['carton', 276.008, 363.855],
+      ['rigid', 266.7, 472.37],
+      ['carton', 276, 364],
     ]);
   });
 
@@ -25,8 +25,8 @@ describe('packaging templates', () => {
       'outside',
       'inside',
     ]);
-    expect(makePackagingDocument('envelope', 2).pages[0].widthMm).toBeCloseTo(246.239, 3);
-    expect(makePackagingDocument('envelope', 2).pages[0].heightMm).toBeCloseTo(192.264, 3);
+    expect(makePackagingDocument('envelope', 2).pages[0].widthMm).toBe(246);
+    expect(makePackagingDocument('envelope', 2).pages[0].heightMm).toBe(192);
     for (const sample of [1, 3]) {
       const page = makePackagingDocument('envelope', sample).pages[0];
       expect([page.widthMm, page.heightMm]).toEqual([246, 192]);
@@ -49,8 +49,12 @@ describe('packaging templates', () => {
           );
           const viewBox = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/)!;
           expect(viewBox, filename).not.toBeNull();
-          expect((Number(viewBox[1]) * 25.4) / 72, filename).toBeCloseTo(page.widthMm, 3);
-          expect((Number(viewBox[2]) * 25.4) / 72, filename).toBeCloseTo(page.heightMm, 3);
+          expect(Math.abs((Number(viewBox[1]) * 25.4) / 72 - page.widthMm), filename).toBeLessThan(
+            0.5,
+          );
+          expect(Math.abs((Number(viewBox[2]) * 25.4) / 72 - page.heightMm), filename).toBeLessThan(
+            0.5,
+          );
         }
       }
     }

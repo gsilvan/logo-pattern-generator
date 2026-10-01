@@ -1,14 +1,8 @@
 import DOMPurify from 'dompurify';
 import { config } from 'fabric';
 import type { PackagingDocument, PackagingLayer } from './model';
-import {
-  banderoleSize,
-  bleedRect,
-  marksSvg,
-  pageMarks,
-  trim,
-  type PrintOptions,
-} from './banderoleGeometry';
+import { markColor, markWidth, marksSvg, pageMarks, type PrintOptions } from './banderoleGeometry';
+import { dieMarkup, printGeometry, type MmRect } from './packagingGeometry';
 import { loadFont, type LoadedFont } from './fonts';
 import { textView } from './packagingText';
 const ns = 'http://www.w3.org/2000/svg';
@@ -94,13 +88,16 @@ function vectorImage(layer: PackagingLayer, index: number) {
   return serialize(svg);
 }
 
-export async function banderoleSvg(
+export async function packagingSvg(
   doc: PackagingDocument,
   options: PrintOptions = { ...pageMarks(doc.pages[doc.selectedPage]), textMode: 'text' },
   embedFonts = true,
+  pageIndex = doc.selectedPage,
 ) {
-  const page = doc.pages[doc.selectedPage],
-    area = bleedRect(page.bleedMm ?? 3);
+  const page = doc.pages[pageIndex],
+    geometry = printGeometry(doc, page),
+    area = geometry.bleed,
+    { media } = geometry;
   const fonts = new Map<string, LoadedFont>();
   const background: string[] = [],
     artwork: string[] = [];
@@ -172,42 +169,66 @@ export async function banderoleSvg(
           .join('')
       : '';
   const rect = `x="${area.x}" y="${area.y}" width="${area.width}" height="${area.height}"`;
+  const offsetX = -media.x,
+    offsetY = -media.y;
+  const marks = geometry.die
+    ? `${options.cutMarks ? geometry.marks.map((line) => `<line x1="${line.x1}" y1="${line.y1}" x2="${line.x2}" y2="${line.y2}" stroke="${markColor(line.kind)}" stroke-width="${markWidth(line.kind)}"/>`).join('') : ''}${options.dieLines ? `<g inkscape:label="Stanzkontur">${dieMarkup(geometry.die, 'cut')}</g>` : ''}${options.innerGuides ? `<g inkscape:label="Falzlinien">${dieMarkup(geometry.die, 'fold')}</g>` : ''}`
+    : marksSvg(page.bleedMm ?? 3, options);
   return {
-    svg: `<svg xmlns="${ns}" xmlns:inkscape="${ink}" width="${banderoleSize.width}mm" height="${banderoleSize.height}mm" viewBox="0 0 ${banderoleSize.width} ${banderoleSize.height}"><defs><clipPath id="bleed"><rect ${rect}/></clipPath><style>${styles}</style></defs><g id="background" inkscape:groupmode="layer" inkscape:label="Hintergrund" clip-path="url(#bleed)"><rect ${rect} fill="${escapeXml(page.background)}"/>${background.join('')}</g><g id="artwork" inkscape:groupmode="layer" inkscape:label="Gestaltung" clip-path="url(#bleed)">${artwork.join('')}</g><g id="marks" inkscape:groupmode="layer" inkscape:label="Markierungen">${marksSvg(page.bleedMm ?? 3, options)}</g></svg>`,
+    svg: `<svg xmlns="${ns}" xmlns:inkscape="${ink}" width="${media.width}mm" height="${media.height}mm" viewBox="0 0 ${media.width} ${media.height}"><defs><clipPath id="bleed"><rect ${rect}/></clipPath><style>${styles}</style></defs><g id="background" inkscape:groupmode="layer" inkscape:label="Hintergrund" transform="translate(${offsetX} ${offsetY})" clip-path="url(#bleed)"><rect ${rect} fill="${escapeXml(page.background)}"/>${background.join('')}</g><g id="artwork" inkscape:groupmode="layer" inkscape:label="Gestaltung" transform="translate(${offsetX} ${offsetY})" clip-path="url(#bleed)">${artwork.join('')}</g><g id="marks" inkscape:groupmode="layer" inkscape:label="Markierungen" transform="translate(${offsetX} ${offsetY})">${marks}</g></svg>`,
     fonts: [...fonts.values()],
   };
 }
 
-export async function banderolePdf(doc: PackagingDocument, options: PrintOptions) {
+export const banderoleSvg = packagingSvg;
+
+export async function packagingPdf(doc: PackagingDocument, options: PrintOptions) {
   const [{ jsPDF }] = await Promise.all([import('jspdf'), import('svg2pdf.js')]);
-  const { svg, fonts } = await banderoleSvg(doc, options, false);
+  const pages = await Promise.all(
+    doc.pages.map(async (page, index) => ({
+      ...(await packagingSvg(doc, options, false, index)),
+      geometry: printGeometry(doc, page),
+    })),
+  );
+  const first = pages[0].geometry.media;
   const pdf = new jsPDF({
     unit: 'mm',
-    format: [banderoleSize.width, banderoleSize.height],
-    orientation: 'landscape',
+    format: [first.width, first.height],
+    orientation: first.width > first.height ? 'landscape' : 'portrait',
     compress: true,
   });
   if (options.textMode === 'text')
-    for (const font of fonts) {
+    for (const font of new Map(
+      pages.flatMap((page) => page.fonts.map((font) => [font.family + font.style, font] as const)),
+    ).values()) {
       const name = font.family.replaceAll(' ', '') + font.style + '.ttf';
       pdf.addFileToVFS(name, font.base64);
       pdf.addFont(name, font.family, font.style);
     }
-  const page = doc.pages[doc.selectedPage];
-  const box = (r: typeof trim) => ({
-    bottomLeftX: (r.x * 72) / 25.4,
-    bottomLeftY: ((banderoleSize.height - r.y - r.height) * 72) / 25.4,
-    topRightX: ((r.x + r.width) * 72) / 25.4,
-    topRightY: ((banderoleSize.height - r.y) * 72) / 25.4,
-  });
-  const context = pdf.getCurrentPageInfo().pageContext;
-  context.trimBox = box(trim);
-  context.bleedBox = box(bleedRect(page.bleedMm ?? 3));
-  await pdf.svg(parse(svg).documentElement, {
-    x: 0,
-    y: 0,
-    width: banderoleSize.width,
-    height: banderoleSize.height,
-  });
+  for (const [index, page] of pages.entries()) {
+    const { media, trim, bleed } = page.geometry;
+    if (index)
+      pdf.addPage(
+        [media.width, media.height],
+        media.width > media.height ? 'landscape' : 'portrait',
+      );
+    const box = (rect: MmRect) => ({
+      bottomLeftX: ((rect.x - media.x) * 72) / 25.4,
+      bottomLeftY: ((media.y + media.height - rect.y - rect.height) * 72) / 25.4,
+      topRightX: ((rect.x - media.x + rect.width) * 72) / 25.4,
+      topRightY: ((media.y + media.height - rect.y) * 72) / 25.4,
+    });
+    const context = pdf.getCurrentPageInfo().pageContext;
+    context.trimBox = box(trim);
+    context.bleedBox = box(bleed);
+    await pdf.svg(parse(page.svg).documentElement, {
+      x: 0,
+      y: 0,
+      width: media.width,
+      height: media.height,
+    });
+  }
   return pdf;
 }
+
+export const banderolePdf = packagingPdf;

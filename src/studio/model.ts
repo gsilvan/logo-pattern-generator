@@ -257,10 +257,12 @@ export function validateProject(input: unknown): Project {
         };
       }
     }
-    if (documents.banderole)
-      documents.banderole = {
-        ...documents.banderole,
-        pages: documents.banderole.pages.map((page) => ({
+    for (const kind of ['banderole', 'envelope', 'rigid', 'carton'] as const) {
+      const doc = documents[kind];
+      if (!doc) continue;
+      documents[kind] = {
+        ...doc,
+        pages: doc.pages.map((page) => ({
           ...page,
           layers: page.layers.map((layer) =>
             layer.type === 'text' && ['♡', '✿', '✓', '♻'].includes(layer.text ?? '')
@@ -275,6 +277,7 @@ export function validateProject(input: unknown): Project {
           ),
         })),
       };
+    }
     upgraded.packagingDocuments = documents;
   }
   return upgraded;

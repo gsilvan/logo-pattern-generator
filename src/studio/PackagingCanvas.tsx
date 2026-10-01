@@ -1,4 +1,5 @@
-import { bleedRect, markLines, markColor, markWidth, pageMarks } from './banderoleGeometry';
+import { markColor, markWidth, pageMarks } from './banderoleGeometry';
+import { dieMarkup, printGeometry } from './packagingGeometry';
 import { loadFont } from './fonts';
 import { textOptions } from './packagingText';
 import { useEffect, useRef, useState } from 'react';
@@ -7,7 +8,6 @@ import { useStudio } from './store';
 import type { PackagingDocument, PackagingLayer, PackagingPage, Project } from './model';
 import { zoomAt, type Position, type Viewport } from './viewport';
 import { useWorkspaceView, ViewToolbar } from './WorkspaceView';
-import { packagingGuide } from './packagingTemplates';
 
 type TaggedObject = FabricObject & { packageLayerId?: string };
 type SelectionProps = {
@@ -27,31 +27,34 @@ export function PackagingWorkspace(
   props: SelectionProps & { onUpdatePage: (changes: Partial<PackagingPage>) => void },
 ) {
   const page = props.document.pages[props.document.selectedPage];
+  const geometry = printGeometry(props.document, page);
   const controls = useWorkspaceView(
     `packaging-${props.document.kind}-${page.face}`,
-    page.widthMm,
-    page.heightMm,
+    geometry.media.width,
+    geometry.media.height,
   );
   return (
     <>
       <ViewToolbar controls={controls} fitLabel="Verpackung einpassen">
-        {props.document.kind === 'banderole' &&
-          (
+        {(
+          [
+            ['cutMarksVisible', 'Schnittmarken'],
+            ['dieLinesVisible', 'Stanzkontur'],
             [
-              ['cutMarksVisible', 'Schnittmarken'],
-              ['dieLinesVisible', 'Stanzkontur'],
-              ['innerGuidesVisible', 'Innere Hilfslinien'],
-            ] as const
-          ).map(([key, label]) => (
-            <label key={key}>
-              <input
-                type="checkbox"
-                checked={page[key] ?? true}
-                onChange={(event) => props.onUpdatePage({ [key]: event.target.checked })}
-              />
-              {label}
-            </label>
-          ))}
+              'innerGuidesVisible',
+              props.document.kind === 'banderole' ? 'Innere Hilfslinien' : 'Falzlinien',
+            ],
+          ] as const
+        ).map(([key, label]) => (
+          <label key={key}>
+            <input
+              type="checkbox"
+              checked={page[key] ?? true}
+              onChange={(event) => props.onUpdatePage({ [key]: event.target.checked })}
+            />
+            {label}
+          </label>
+        ))}
       </ViewToolbar>
       <div
         className="packCanvasHost"
@@ -98,10 +101,18 @@ export function PackagingCanvas(props: Props) {
     });
     let space = false;
     camera.current = () => {
-      const { width, height, view, hand } = current.current;
+      const { width, height, view, hand, document: doc } = current.current;
+      const media = printGeometry(doc).media;
       if (instance.width !== width || instance.height !== height)
         instance.setDimensions({ width, height });
-      instance.setViewportTransform([view.scale, 0, 0, view.scale, view.x, view.y]);
+      instance.setViewportTransform([
+        view.scale,
+        0,
+        0,
+        view.scale,
+        view.x - media.x * view.scale,
+        view.y - media.y * view.scale,
+      ]);
       instance.selection = !hand && !space;
       instance.defaultCursor = hand || space ? 'grab' : 'default';
       instance.requestRenderAll();
@@ -361,77 +372,42 @@ export function PackagingCanvas(props: Props) {
 
   useEffect(() => {
     camera.current();
-  }, [props.view, props.width, props.height, props.hand]);
+  }, [props.view, props.width, props.height, props.hand, props.document]);
 
-  // Guide loading is independent of text/selection updates.
+  // The paper and bleed are independent of text/selection updates.
   const page = props.document.pages[props.document.selectedPage];
+  const geometry = printGeometry(props.document, page);
   useEffect(() => {
     if (!canvas) return;
-    let cancelled = false;
     const base = new Rect({
-      left: 0,
-      top: 0,
+      left: geometry.media.x,
+      top: geometry.media.y,
       originX: 'left',
       originY: 'top',
-      width: page.widthMm,
-      height: page.heightMm,
-      fill: props.document.kind === 'banderole' ? '#ffffff' : page.background,
+      width: geometry.media.width,
+      height: geometry.media.height,
+      fill: '#ffffff',
       stroke: '#27303d',
       strokeWidth: 0.22,
       selectable: false,
       evented: false,
     });
+    const background = new Rect({
+      originX: 'left',
+      originY: 'top',
+      left: geometry.bleed.x,
+      top: geometry.bleed.y,
+      width: geometry.bleed.width,
+      height: geometry.bleed.height,
+      fill: page.background,
+      strokeWidth: 0,
+      selectable: false,
+      evented: false,
+    });
     canvas.insertAt(0, base);
-    if (props.document.kind === 'banderole') {
-      const area = bleedRect(page.bleedMm ?? 3);
-      const background = new Rect({
-        originX: 'left',
-        originY: 'top',
-        left: area.x,
-        top: area.y,
-        width: area.width,
-        height: area.height,
-        fill: page.background,
-        strokeWidth: 0,
-        selectable: false,
-        evented: false,
-      });
-      canvas.insertAt(1, background);
-      return () => {
-        canvas.remove(base, background);
-      };
-    }
-    let guide: FabricImage | undefined;
-    const path = packagingGuide(props.document);
-    void FabricImage.fromURL(path)
-      .then((image) => {
-        if (cancelled) {
-          image.dispose();
-          return;
-        }
-        guide = image;
-        // Each template supplies a guide at its own PDF dimensions; never stretch it.
-        const scale = page.widthMm / image.width;
-        image.set({
-          left: 0,
-          top: 0,
-          originX: 'left',
-          originY: 'top',
-          scaleX: scale,
-          scaleY: scale,
-          selectable: false,
-          evented: false,
-        });
-        canvas.insertAt(1, image);
-        canvas.requestRenderAll();
-      })
-      .catch(() => {
-        if (!cancelled) setError('Stanzvorlage konnte nicht geladen werden.');
-      });
+    canvas.insertAt(1, background);
     return () => {
-      cancelled = true;
-      canvas.remove(base);
-      if (guide) canvas.remove(guide);
+      canvas.remove(base, background);
     };
   }, [
     canvas,
@@ -450,10 +426,9 @@ export function PackagingCanvas(props: Props) {
     void (async () => {
       // Complete image loading before touching the active selection.
       const loaded = new Map<string, FabricObject>();
-      if (props.document.kind === 'banderole')
-        await Promise.all(
-          page.layers.filter((layer) => layer.visible && layer.type === 'text').map(loadFont),
-        );
+      await Promise.all(
+        page.layers.filter((layer) => layer.visible && layer.type === 'text').map(loadFont),
+      );
       for (const layer of page.layers) {
         if (
           layer.visible &&
@@ -517,28 +492,25 @@ export function PackagingCanvas(props: Props) {
           });
           if (object instanceof Textbox)
             object.set({
-              ...textOptions(layer, props.document.kind === 'banderole'),
+              ...textOptions(layer),
             });
           else
             object.set({
               scaleX: layer.widthMm / object.width,
               scaleY: layer.heightMm / object.height,
             });
-          if (props.document.kind === 'banderole') {
-            const area = bleedRect(page.bleedMm ?? 3);
-            object.set({
-              clipPath: new Rect({
-                originX: 'left',
-                originY: 'top',
-                left: area.x,
-                top: area.y,
-                width: area.width,
-                height: area.height,
-                absolutePositioned: true,
-                strokeWidth: 0,
-              }),
-            });
-          }
+          object.set({
+            clipPath: new Rect({
+              originX: 'left',
+              originY: 'top',
+              left: geometry.bleed.x,
+              top: geometry.bleed.y,
+              width: geometry.bleed.width,
+              height: geometry.bleed.height,
+              absolutePositioned: true,
+              strokeWidth: 0,
+            }),
+          });
           object.setCoords();
         }
         canvas.bringObjectToFront(object);
@@ -574,10 +546,13 @@ export function PackagingCanvas(props: Props) {
   return (
     <div className="interactionSurface" ref={host}>
       <canvas ref={element} aria-label="Verpackung bearbeiten" />
-      {props.document.kind === 'banderole' && (
-        <svg className="packMarks" width={props.width} height={props.height} aria-hidden="true">
-          <g transform={`translate(${props.view.x} ${props.view.y}) scale(${props.view.scale})`}>
-            {markLines(page.bleedMm ?? 3, pageMarks(page)).map((line, index) => (
+      <svg className="packMarks" width={props.width} height={props.height} aria-hidden="true">
+        <g
+          transform={`translate(${props.view.x - geometry.media.x * props.view.scale} ${props.view.y - geometry.media.y * props.view.scale}) scale(${props.view.scale})`}
+        >
+          {geometry.marks
+            .filter((line) => line.kind !== 'cutMarks' || pageMarks(page).cutMarks)
+            .map((line, index) => (
               <line
                 key={index}
                 x1={line.x1}
@@ -588,9 +563,14 @@ export function PackagingCanvas(props: Props) {
                 strokeWidth={markWidth(line.kind)}
               />
             ))}
-          </g>
-        </svg>
-      )}
+          {geometry.die && pageMarks(page).dieLines && (
+            <g dangerouslySetInnerHTML={{ __html: dieMarkup(geometry.die, 'cut') }} />
+          )}
+          {geometry.die && pageMarks(page).innerGuides && (
+            <g dangerouslySetInnerHTML={{ __html: dieMarkup(geometry.die, 'fold') }} />
+          )}
+        </g>
+      </svg>
       {error && (
         <div className="emptyCanvas" role="status">
           {error}
@@ -612,7 +592,7 @@ export function addPackagingText(document: PackagingDocument): PackagingLayer {
     widthMm: Math.min(page.widthMm * 0.65, 80),
     heightMm: 12,
     rotation: 0,
-    fontFamily: document.kind === 'banderole' ? 'Liberation Sans' : 'Arial',
+    fontFamily: 'Liberation Sans',
     fontSizePt: 12,
     color: '#27303d',
     bold: false,

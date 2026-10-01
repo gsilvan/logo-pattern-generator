@@ -319,11 +319,17 @@ try {
     const bytes = await readFile(await downloaded.path());
     const pdf = bytes.toString('latin1');
     const doc = (await state()).project.packagingDocuments[type.kind];
+    const pageMedia = await page.evaluate(async (kind) => {
+      const { printGeometry } = await import('/src/studio/packagingGeometry.ts');
+      const { useStudio } = await import('/src/studio/store.ts');
+      const document = useStudio.getState().project.packagingDocuments[kind];
+      return document.pages.map((item) => printGeometry(document, item).media);
+    }, type.kind);
     const media = [...pdf.matchAll(/\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]/g)];
     assert.equal(media.length, doc.pages.length);
     for (const [i, box] of media.entries()) {
-      assert.ok(Math.abs((+box[1] * 25.4) / 72 - doc.pages[i].widthMm) < 0.01);
-      assert.ok(Math.abs((+box[2] * 25.4) / 72 - doc.pages[i].heightMm) < 0.01);
+      assert.ok(Math.abs((+box[1] * 25.4) / 72 - pageMedia[i].width) < 0.01);
+      assert.ok(Math.abs((+box[2] * 25.4) / 72 - pageMedia[i].height) < 0.01);
     }
     const rendered = await page.evaluate(
       async (bytes) => {
@@ -389,6 +395,82 @@ try {
     }
     await page.getByRole('button', { name: 'Schließen', exact: true }).click();
   }
+  // The same controls and persisted model must work for every other die.
+  for (const kind of ['envelope', 'rigid', 'carton']) {
+    await page.getByRole('combobox', { name: 'Verpackungsart' }).selectOption(kind);
+    const activePage = async () => {
+      const doc = (await state()).project.packagingDocuments[kind];
+      return doc.pages[doc.selectedPage];
+    };
+    await page.getByRole('combobox', { name: 'Beschnitt (mm)' }).selectOption('5');
+    assert.equal((await activePage()).bleedMm, 5);
+    await page.getByRole('button', { name: 'Rückgängig', exact: true }).click();
+    assert.equal((await activePage()).bleedMm ?? 3, 3);
+    await page.getByRole('button', { name: 'Wiederholen', exact: true }).click();
+    assert.equal((await activePage()).bleedMm, 5);
+    await page.locator('.viewMenu summary').click();
+    for (const [name, key] of [
+      ['Schnittmarken', 'cutMarksVisible'],
+      ['Stanzkontur', 'dieLinesVisible'],
+      ['Falzlinien', 'innerGuidesVisible'],
+    ]) {
+      await page.getByRole('checkbox', { name, exact: true }).uncheck();
+      assert.equal((await activePage())[key], false);
+      await page.getByRole('checkbox', { name, exact: true }).check();
+      assert.equal((await activePage())[key], true);
+    }
+    await page.locator('.viewMenu summary').click();
+  }
+  await page.getByRole('combobox', { name: 'Faltschachtelseite' }).selectOption('0');
+  await page.getByLabel('Hintergrundfarbe', { exact: true }).fill('#f0e8dc');
+  const cartonPage = () =>
+    state().then(({ project }) => project.packagingDocuments.carton.pages[0]);
+  assert.equal((await cartonPage()).background, '#f0e8dc');
+  await page.getByLabel('Hintergrundbild der Faltschachtel hochladen').setInputFiles({
+    name: 'background.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/NisAAAAASUVORK5CYII=',
+      'base64',
+    ),
+  });
+  await page.getByRole('button', { name: 'Bild bearbeiten', exact: true }).waitFor();
+  assert.equal((await cartonPage()).layers[0].role, 'background');
+  assert.equal((await cartonPage()).layers[0].locked, true);
+  await page.getByRole('button', { name: 'Bild bearbeiten', exact: true }).click();
+  assert.equal((await cartonPage()).layers[0].locked, false);
+  const originalX = (await cartonPage()).layers[0].xMm;
+  await page.getByRole('textbox', { name: 'Position X' }).fill(String(originalX / 10 + 1));
+  await page.getByRole('textbox', { name: 'Position X' }).blur();
+  assert.ok(Math.abs((await cartonPage()).layers[0].xMm - originalX - 10) < 0.01);
+  await page.reload();
+  await page.locator('.upper-canvas').waitFor();
+  assert.equal((await cartonPage()).background, '#f0e8dc');
+  assert.ok(Math.abs((await cartonPage()).layers[0].xMm - originalX - 10) < 0.01);
+  await page.getByRole('button', { name: 'Verpackungen', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Verpackungsart' }).selectOption('carton');
+  await page.getByRole('button', { name: 'Exportieren', exact: true }).click();
+  await page.getByRole('combobox', { name: 'PDF-Seiten der Faltschachtel' }).selectOption('1');
+  const onlyInside = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Verpackung als PDF', exact: true }).click(),
+  ]).then(([download]) => download);
+  const onlyInsidePdf = (await readFile(await onlyInside.path())).toString('latin1');
+  assert.equal((onlyInsidePdf.match(/\/Type\s*\/Page\b/g) || []).length, 1);
+  await page.getByRole('combobox', { name: 'SVG-Seite der Faltschachtel' }).selectOption('1');
+  const insideSvg = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Faltschachtel als SVG', exact: true }).click(),
+  ]).then(([download]) => download);
+  assert.match(insideSvg.suggestedFilename(), /innen|inside/i);
+  const insideSvgSource = await readFile(await insideSvg.path(), 'utf8');
+  assert.ok(insideSvgSource.includes('inkscape:label="Falzlinien"'));
+  await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+  await page.getByRole('button', { name: 'Bild entfernen', exact: true }).click();
+  assert.equal(
+    (await cartonPage()).layers.some((layer) => layer.role === 'background'),
+    false,
+  );
   await page.setViewportSize({ width: 390, height: 844 });
   await paint();
   await page.screenshot({ path: `${output}/mobile.png` });

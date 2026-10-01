@@ -54,4 +54,52 @@ describe('physical geometry and repeat cycles', () => {
       banderole.pages[0].layers.length,
     );
   });
+  it('preserves positions, backgrounds and marks while mapping old fonts on every die', () => {
+    for (const kind of ['envelope', 'rigid', 'carton'] as const) {
+      const doc = makePackagingDocument(kind, 0);
+      const page = doc.pages[0];
+      const imported = validateProject({
+        ...initialProject,
+        packagingDocuments: {
+          [kind]: {
+            ...doc,
+            pages: [
+              {
+                ...page,
+                bleedMm: 5,
+                cutMarksVisible: false,
+                dieLinesVisible: true,
+                innerGuidesVisible: false,
+                layers: [
+                  { ...page.layers[0], fontFamily: 'Arial' },
+                  {
+                    ...page.layers[0],
+                    id: 'background',
+                    type: 'image',
+                    role: 'background',
+                    dataUrl: 'data:image/png;base64,AA==',
+                    locked: true,
+                  },
+                ],
+              },
+            ],
+            selectedPage: 0,
+          },
+        },
+      });
+      const restored = imported.packagingDocuments?.[kind]?.pages[0];
+      expect(restored?.bleedMm).toBe(5);
+      expect(restored?.cutMarksVisible).toBe(false);
+      expect(restored?.dieLinesVisible).toBe(true);
+      expect(restored?.innerGuidesVisible).toBe(false);
+      expect(restored?.layers[0]).toMatchObject({
+        xMm: page.layers[0].xMm,
+        yMm: page.layers[0].yMm,
+        text: page.layers[0].text,
+        fontFamily: 'Liberation Sans',
+        replacedFont: 'Arial',
+      });
+      expect(restored?.layers[1]).toMatchObject({ role: 'background', locked: true });
+    }
+  });
 });

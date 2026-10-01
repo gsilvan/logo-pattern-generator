@@ -1,7 +1,8 @@
-import { backgroundPlacement, pageMarks } from './banderoleGeometry';
+import { pageMarks } from './banderoleGeometry';
+import { printGeometry } from './packagingGeometry';
 import { fontFamilies } from './fonts';
 import { symbolData } from './symbols';
-import { BanderolePreview } from './BanderolePreview';
+import { PackagingPreview } from './BanderolePreview';
 import { useEffect, useState, useRef, type ChangeEvent } from 'react';
 import { Workspace } from './Workspace';
 import { Dialog } from './Dialog';
@@ -157,6 +158,7 @@ export function App() {
   const [includeInnerGuides, setIncludeInnerGuides] = useState(true);
   const [textMode, setTextMode] = useState<'text' | 'paths'>('text');
   const [packagingExportPages, setPackagingExportPages] = useState(0);
+  const [packagingSvgPage, setPackagingSvgPage] = useState(0);
   const packagingDocument =
     project.packagingDocuments?.[packagingKind] ?? makePackagingDocument(packagingKind);
   const packagingPage = packagingDocument.pages[packagingDocument.selectedPage];
@@ -263,6 +265,8 @@ export function App() {
     await run(async () => {
       const asset = await readAsset(file);
       const widthMm = Math.min(55, packagingPage.widthMm * 0.28);
+      const area = printGeometry(packagingDocument, packagingPage).bleed;
+      const cover = Math.max(area.width / asset.width, area.height / asset.height);
       const layer: PackagingLayer = {
         id: crypto.randomUUID(),
         name: file.name,
@@ -273,7 +277,7 @@ export function App() {
         widthMm,
         heightMm: (widthMm * asset.height) / asset.width,
         rotation: 0,
-        fontFamily: 'Arial',
+        fontFamily: 'Liberation Sans',
         fontSizePt: 12,
         color: '#27303d',
         bold: false,
@@ -281,7 +285,13 @@ export function App() {
         visible: true,
         locked: background,
         ...(background
-          ? { role: 'background', ...backgroundPlacement(asset.width, asset.height, bleedMm) }
+          ? {
+              role: 'background',
+              xMm: area.x + area.width / 2,
+              yMm: area.y + area.height / 2,
+              widthMm: asset.width * cover,
+              heightMm: asset.height * cover,
+            }
           : {}),
       };
       if (background)
@@ -492,11 +502,12 @@ export function App() {
             className="primary"
             disabled={!ready}
             onClick={() => {
-              if (packagingKind === 'banderole') {
+              if (tab === 'packaging') {
                 const marks = pageMarks(packagingPage);
                 setIncludeCutMarks(marks.cutMarks);
                 setIncludeDieLines(marks.dieLines);
                 setIncludeInnerGuides(marks.innerGuides);
+                setPackagingSvgPage(packagingDocument.selectedPage);
               }
               setShowExport(true);
             }}
@@ -883,26 +894,36 @@ export function App() {
               <section>
                 <h2>{packagingTypes.find((type) => type.kind === packagingKind)?.label}</h2>
                 <p className="hint">
-                  PDF-Seite {packagingPage.widthMm.toLocaleString('de-DE')} ×{' '}
-                  {packagingPage.heightMm.toLocaleString('de-DE')} mm
+                  Druckseite{' '}
+                  {printGeometry(packagingDocument, packagingPage).media.width.toLocaleString(
+                    'de-DE',
+                    { maximumFractionDigits: 2 },
+                  )}{' '}
+                  ×{' '}
+                  {printGeometry(packagingDocument, packagingPage).media.height.toLocaleString(
+                    'de-DE',
+                    { maximumFractionDigits: 2 },
+                  )}{' '}
+                  mm
                 </p>
                 {packagingKind === 'banderole' && <p className="hint">Stanzmaß 235 × 47 mm</p>}
-                {packagingKind === 'banderole' && (
-                  <label className="textField">
-                    Beschnitt (mm)
-                    <select
-                      aria-label="Beschnitt (mm)"
-                      value={bleedMm}
-                      onChange={(e) => updatePackagingPage({ bleedMm: Number(e.target.value) })}
-                    >
-                      {[0, 1, 2, 3, 4, 5].map((n) => (
-                        <option key={n} value={n}>
-                          {n} mm
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                {packagingKind === 'envelope' && (
+                  <p className="hint">Gefaltet: DIN C6 · 114 × 162 mm</p>
                 )}
+                <label className="textField">
+                  Beschnitt (mm)
+                  <select
+                    aria-label="Beschnitt (mm)"
+                    value={bleedMm}
+                    onChange={(e) => updatePackagingPage({ bleedMm: Number(e.target.value) })}
+                  >
+                    {[0, 1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>
+                        {n} mm
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <button onClick={() => addPackagingLayer(addPackagingText(packagingDocument))}>
                   + Text hinzufügen
                 </button>
@@ -916,9 +937,8 @@ export function App() {
                           ...addPackagingText(packagingDocument),
                           name: `Symbol ${symbol}`,
                           text: symbol,
-                          ...(packagingKind === 'banderole'
-                            ? { type: 'image' as const, dataUrl: symbolData(symbol) }
-                            : {}),
+                          type: 'image' as const,
+                          dataUrl: symbolData(symbol),
                           fontSizePt: 28,
                           widthMm: 18,
                           heightMm: 18,
@@ -1139,17 +1159,7 @@ export function App() {
                         }))
                       }
                     >
-                      {(packagingKind === 'banderole'
-                        ? fontFamilies
-                        : [
-                            'Arial',
-                            'Georgia',
-                            'Times New Roman',
-                            'Verdana',
-                            'Courier New',
-                            'system-ui',
-                          ]
-                      ).map((font) => (
+                      {fontFamilies.map((font) => (
                         <option key={font}>{font}</option>
                       ))}
                     </select>
@@ -1220,66 +1230,53 @@ export function App() {
                   </button>
                 </section>
               )}
-              {packagingKind === 'banderole' ? (
-                <>
-                  <section>
-                    <h2>Hintergrund</h2>
-                    <label className="textField">
-                      Hintergrundfarbe
-                      <input
-                        type="color"
-                        value={packagingPage.background}
-                        onChange={(e) => updatePackagingPage({ background: e.target.value })}
-                      />
-                    </label>
-                    <label className="uploadButton">
-                      Hintergrundbild hochladen
-                      <input
-                        aria-label="Hintergrundbild der Banderole hochladen"
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                        onChange={(e) => void uploadPackaging(e, true)}
-                      />
-                    </label>
-                    {backgroundLayer && (
-                      <>
-                        <button
-                          onClick={() => {
-                            updatePackagingLayer(backgroundLayer.id, (layer) => ({
-                              ...layer,
-                              locked: !layer.locked,
-                            }));
-                            setPackagingSelection(
-                              backgroundLayer.locked ? [backgroundLayer.id] : [],
-                            );
-                          }}
-                        >
-                          {backgroundLayer.locked ? 'Bild bearbeiten' : 'Bild sperren'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            updatePackagingPage({
-                              layers: packagingPage.layers.filter(
-                                (layer) => layer.role !== 'background',
-                              ),
-                            });
-                            setPackagingSelection([]);
-                          }}
-                        >
-                          Bild entfernen
-                        </button>
-                      </>
-                    )}
-                  </section>
-                </>
-              ) : (
-                <section>
-                  <h2>Hilfslinien</h2>
-                  <p className="hint">
-                    Stanz- und Falzlinien werden beim PDF-Export separat zugeschaltet.
-                  </p>
-                </section>
-              )}
+              <section>
+                <h2>Hintergrund</h2>
+                <label className="textField">
+                  Hintergrundfarbe
+                  <input
+                    type="color"
+                    value={packagingPage.background}
+                    onChange={(e) => updatePackagingPage({ background: e.target.value })}
+                  />
+                </label>
+                <label className="uploadButton">
+                  Hintergrundbild hochladen
+                  <input
+                    aria-label={`Hintergrundbild der ${packagingTypes.find((type) => type.kind === packagingKind)?.label} hochladen`}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    onChange={(e) => void uploadPackaging(e, true)}
+                  />
+                </label>
+                {backgroundLayer && (
+                  <>
+                    <button
+                      onClick={() => {
+                        updatePackagingLayer(backgroundLayer.id, (layer) => ({
+                          ...layer,
+                          locked: !layer.locked,
+                        }));
+                        setPackagingSelection(backgroundLayer.locked ? [backgroundLayer.id] : []);
+                      }}
+                    >
+                      {backgroundLayer.locked ? 'Bild bearbeiten' : 'Bild sperren'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        updatePackagingPage({
+                          layers: packagingPage.layers.filter(
+                            (layer) => layer.role !== 'background',
+                          ),
+                        });
+                        setPackagingSelection([]);
+                      }}
+                    >
+                      Bild entfernen
+                    </button>
+                  </>
+                )}
+              </section>
             </>
           )}
         </aside>
@@ -1294,11 +1291,7 @@ export function App() {
       {showExport && (
         <Dialog
           title="Exportieren"
-          className={
-            tab === 'packaging' && packagingKind === 'banderole'
-              ? 'banderoleExportDialog'
-              : undefined
-          }
+          className={tab === 'packaging' ? 'banderoleExportDialog' : undefined}
           onClose={() => {
             if (!busy) setShowExport(false);
           }}
@@ -1358,35 +1351,37 @@ export function App() {
                     checked={includeDieLines}
                     onChange={(e) => setIncludeDieLines(e.target.checked)}
                   />{' '}
-                  {packagingKind === 'banderole' ? 'Stanzkontur' : 'Stanz- und Falzlinien'}
+                  Stanzkontur
                 </label>
-                {packagingKind === 'banderole' && (
-                  <>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={includeInnerGuides}
-                        onChange={(e) => setIncludeInnerGuides(e.target.checked)}
-                      />
-                      Innere Hilfslinien
-                    </label>
-                    <label className="textField">
-                      Textausgabe
-                      <select
-                        value={textMode}
-                        onChange={(e) => setTextMode(e.target.value as 'text' | 'paths')}
-                      >
-                        <option value="text">Bearbeitbarer Text</option>
-                        <option value="paths">Text als Pfade</option>
-                      </select>
-                    </label>
-                    <p className="hint">Beschnitt {bleedMm} mm · Endformat 235 × 47 mm</p>
-                    <BanderolePreview document={packagingDocument} options={printOptions} />
-                  </>
-                )}
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={includeInnerGuides}
+                    onChange={(e) => setIncludeInnerGuides(e.target.checked)}
+                  />
+                  {packagingKind === 'banderole' ? 'Innere Hilfslinien' : 'Falzlinien'}
+                </label>
+                <label className="textField">
+                  Textausgabe
+                  <select
+                    value={textMode}
+                    onChange={(e) => setTextMode(e.target.value as 'text' | 'paths')}
+                  >
+                    <option value="text">Bearbeitbarer Text</option>
+                    <option value="paths">Text als Pfade</option>
+                  </select>
+                </label>
+                <p className="hint">
+                  Beschnitt {bleedMm} mm ·{' '}
+                  {packagingKind === 'banderole'
+                    ? 'Endformat 235 × 47 mm'
+                    : packagingKind === 'envelope'
+                      ? 'Gefaltet: DIN C6 · 114 × 162 mm'
+                      : `Stanzbogen ${printGeometry(packagingDocument, packagingPage).trim.width.toFixed(2)} × ${printGeometry(packagingDocument, packagingPage).trim.height.toFixed(2)} mm`}
+                </p>
                 {packagingKind === 'carton' && (
-                  <label>
-                    Seiten
+                  <label className="textField">
+                    PDF-Seiten
                     <select
                       aria-label="PDF-Seiten der Faltschachtel"
                       onChange={(e) => setPackagingExportPages(Number(e.target.value))}
@@ -1398,6 +1393,26 @@ export function App() {
                     </select>
                   </label>
                 )}
+                {packagingKind === 'carton' && (
+                  <label className="textField">
+                    SVG-Seite
+                    <select
+                      aria-label="SVG-Seite der Faltschachtel"
+                      value={packagingSvgPage}
+                      onChange={(e) => setPackagingSvgPage(Number(e.target.value))}
+                    >
+                      <option value={0}>Außen</option>
+                      <option value={1}>Innen</option>
+                    </select>
+                  </label>
+                )}
+                <PackagingPreview
+                  document={packagingDocument}
+                  options={printOptions}
+                  pageIndex={
+                    packagingKind === 'carton' ? packagingSvgPage : packagingDocument.selectedPage
+                  }
+                />
                 <button
                   className="primary"
                   disabled={busy}
@@ -1408,11 +1423,13 @@ export function App() {
                         if (packagingExportPages === 1)
                           selectedDocument = {
                             ...packagingDocument,
+                            selectedPage: 0,
                             pages: [packagingDocument.pages[1]],
                           };
                         if (packagingExportPages === 2)
                           selectedDocument = {
                             ...packagingDocument,
+                            selectedPage: 0,
                             pages: [packagingDocument.pages[0]],
                           };
                       }
@@ -1427,16 +1444,29 @@ export function App() {
                 >
                   Verpackung als PDF
                 </button>
-                {packagingKind === 'banderole' && (
-                  <button
-                    disabled={busy}
-                    onClick={() =>
-                      void run(() => exportPackagingSvg(packagingDocument, printOptions))
-                    }
-                  >
-                    Banderole als SVG
-                  </button>
-                )}
+                <button
+                  disabled={busy}
+                  onClick={() =>
+                    void run(() =>
+                      exportPackagingSvg(
+                        {
+                          ...packagingDocument,
+                          selectedPage:
+                            packagingKind === 'carton'
+                              ? packagingSvgPage
+                              : packagingDocument.selectedPage,
+                        },
+                        printOptions,
+                      ),
+                    )
+                  }
+                >
+                  {packagingKind === 'banderole'
+                    ? 'Banderole als SVG'
+                    : packagingKind === 'carton'
+                      ? 'Faltschachtel als SVG'
+                      : 'Verpackung als SVG'}
+                </button>
               </div>
             )}
           </div>

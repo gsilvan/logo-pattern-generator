@@ -31,14 +31,14 @@ export const packagingTypes: {
     kind: 'rigid',
     label: 'Verpackung fest',
     widthMm: 266.7,
-    heightMm: 472.369,
+    heightMm: 472.37,
     examples: ['Pflege & Anwendung', 'Bienenwachstuch 25 × 25 cm', 'Produktinformation'],
   },
   {
     kind: 'carton',
     label: 'Faltschachtel',
-    widthMm: 276.008,
-    heightMm: 363.855,
+    widthMm: 276,
+    heightMm: 364,
     examples: ['Inhalt & Dankeschön', 'Produktinformation', 'Obermaiselstein'],
   },
 ];
@@ -94,7 +94,7 @@ function banderole(sample: number) {
   if (sample === 1)
     return [
       block('www.musterfirma.de', 15, 17, 45, 10, 8),
-      block('Lebensmittel umweltfreundlich aufbewahren', 70, 13, 55, 12, 11, true),
+      block('Lebensmittel umweltfreundlich aufbewahren', 70, 12, 55, 15, 11, true),
       block('Bienenwachstuch', 70, 28, 55, 10, 15, true),
       block('plastikfrei und bis zu 500-mal wiederverwendbar', 70, 41, 55, 10, 8),
       block('25 × 25 cm', 188, 25, 47, 16, 14, true),
@@ -277,7 +277,7 @@ function rigid(sample: number) {
   if (sample === 2)
     return [
       ...front,
-      block(intro, 80, 391, 105, 28, 9, false, 180),
+      block(intro, 80, 410, 105, 25, 7.5, false, 180),
       block(usage, 80, 357, 105, 28, 9, false, 180),
       block(notes, 80, 317, 105, 34, 8.5, false, 180),
       block(ingredients + '\nwww.musterfirma.de', 80, 278, 105, 30, 9, false, 180),
@@ -472,25 +472,20 @@ export function makePackagingDocument(kind: PackagingKind, sample = -1): Packagi
     selectedPage: 0,
     pages: faces.map((face) => ({
       face,
-      widthMm:
-        kind === 'envelope' && sample > 0 ? (sample === 2 ? (698 * 25.4) / 72 : 246) : size.widthMm,
-      heightMm:
-        kind === 'envelope' && sample > 0
-          ? sample === 2
-            ? (545 * 25.4) / 72
-            : 192
-          : size.heightMm,
+      widthMm: kind === 'envelope' && sample > 0 ? 246 : size.widthMm,
+      heightMm: kind === 'envelope' && sample > 0 ? 192 : size.heightMm,
       background: '#ffffff',
       layers:
         sample < 0
           ? []
-          : kind === 'banderole'
-            ? banderole(sample).map((layer) => ({ ...layer, fontFamily: 'Liberation Sans' }))
-            : kind === 'envelope'
-              ? envelope(sample)
-              : kind === 'rigid'
-                ? rigid(sample)
-                : carton(sample, face === 'inside'),
+          : (kind === 'banderole'
+              ? banderole(sample)
+              : kind === 'envelope'
+                ? envelope(sample)
+                : kind === 'rigid'
+                  ? rigid(sample)
+                  : carton(sample, face === 'inside')
+            ).map((layer) => ({ ...layer, fontFamily: 'Liberation Sans' })),
     })),
   };
 }
