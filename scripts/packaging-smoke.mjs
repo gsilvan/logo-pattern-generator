@@ -239,6 +239,9 @@ try {
   const examples = await page.evaluate(async () => {
     const { packagingTypes, makePackagingDocument } =
       await import('/src/studio/packagingTemplates.ts');
+    const { markLines } = await import('/src/studio/banderoleGeometry.ts');
+    const { loadFont } = await import('/src/studio/fonts.ts');
+    const { textOptions } = await import('/src/studio/packagingText.ts');
     const { Textbox } = await import('/node_modules/fabric/dist/index.min.mjs');
     const problems = [];
     for (const type of packagingTypes)
@@ -246,11 +249,9 @@ try {
         const doc = makePackagingDocument(type.kind, i);
         for (const page of doc.pages)
           for (const layer of page.layers) {
+            if (type.kind === 'banderole') await loadFont(layer);
             const text = new Textbox(layer.text, {
-              width: layer.widthMm,
-              fontFamily: layer.fontFamily,
-              fontSize: (layer.fontSizePt * 25.4) / 72,
-              fontWeight: layer.bold ? 'bold' : 'normal',
+              ...textOptions(layer, type.kind === 'banderole'),
             });
             if (text.height > layer.heightMm + 0.5)
               problems.push(
@@ -263,6 +264,22 @@ try {
               layer.yMm + text.height / 2 > page.heightMm
             )
               problems.push(`Outside page: ${layer.name}`);
+            if (type.kind === 'banderole') {
+              const left = layer.xMm - layer.widthMm / 2;
+              const right = left + Math.max(...text._textLines.map((_, i) => text.getLineWidth(i)));
+              const guides = markLines(3, {
+                cutMarks: false,
+                dieLines: false,
+                innerGuides: true,
+              });
+              for (const guide of guides) {
+                const clearance = 1;
+                if (left < guide.x1 + clearance && right > guide.x1 - clearance)
+                  problems.push(
+                    `Guide overlap: banderole/${i}/${layer.name} at ${guide.x1.toFixed(1)} mm`,
+                  );
+              }
+            }
             text.dispose();
           }
       }

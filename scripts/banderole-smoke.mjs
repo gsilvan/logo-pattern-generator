@@ -313,8 +313,19 @@ try {
   }
   assert.ok(zoomDifference < 1.5, 'Zoom must preserve the exported scene');
   await page.getByRole('button', { name: 'Verpackung einpassen', exact: true }).click();
+  await page.locator('.viewMenu summary').click();
   await page.getByLabel('Schnittmarken', { exact: true }).uncheck();
   assert.equal(await page.locator('.packMarks line').count(), 7);
+  await page.getByRole('button', { name: 'Rückgängig', exact: true }).click();
+  assert.equal(await page.locator('.packMarks line').count(), 15);
+  await page.locator('.viewMenu summary').click();
+  await page.getByLabel('Stanzkontur', { exact: true }).uncheck();
+  assert.equal(await page.locator('.packMarks line').count(), 11);
+  await page.getByRole('button', { name: 'Rückgängig', exact: true }).click();
+  assert.equal(await page.locator('.packMarks line').count(), 15);
+  await page.locator('.viewMenu summary').click();
+  await page.getByLabel('Innere Hilfslinien', { exact: true }).uncheck();
+  assert.equal(await page.locator('.packMarks line').count(), 12);
   await page.getByRole('button', { name: 'Rückgängig', exact: true }).click();
   assert.equal(await page.locator('.packMarks line').count(), 15);
   await page.getByLabel('Beschnitt (mm)', { exact: true }).selectOption('0');
@@ -337,8 +348,14 @@ try {
   assert.ok((await compareScene()) < 1.5, 'Transformed background and export must match');
   await page.getByRole('button', { name: 'Rückgängig', exact: true }).click();
   await page.getByRole('button', { name: 'Wiederholen', exact: true }).click();
+  await page.locator('.viewMenu summary').click();
+  await page.getByLabel('Innere Hilfslinien', { exact: true }).uncheck();
   console.log('UI export preview');
   await page.getByRole('button', { name: 'Exportieren', exact: true }).click();
+  assert.equal(
+    await page.getByRole('dialog').getByLabel('Innere Hilfslinien', { exact: true }).isChecked(),
+    false,
+  );
   await page.getByAltText('Vorschau der Banderole mit gewählten Druckmarken').waitFor();
   const download = await Promise.all([
     page.waitForEvent('download'),
@@ -362,6 +379,11 @@ try {
   await page.getByRole('button', { name: 'Verpackung einpassen', exact: true }).click();
   assert.ok((await compareScene()) < 1.5, 'Narrow-screen editor and export must match');
   await page.screenshot({ path: `${output}/mobile.png` });
+  await page.locator('.viewMenu summary').click();
+  for (const label of ['Schnittmarken', 'Stanzkontur', 'Innere Hilfslinien'])
+    assert.ok(await page.getByLabel(label, { exact: true }).isVisible());
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await page.screenshot({ path: `${output}/mobile-view-menu.png` });
   await page.getByRole('button', { name: 'Werkzeuge', exact: true }).click();
   await page.getByRole('button', { name: 'Bild entfernen', exact: true }).click();
   assert.ok(!(await state()).pages[0].layers.some((layer) => layer.role === 'background'));

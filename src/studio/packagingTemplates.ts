@@ -94,9 +94,9 @@ function banderole(sample: number) {
   if (sample === 1)
     return [
       block('www.musterfirma.de', 15, 17, 45, 10, 8),
-      block('Lebensmittel umweltfreundlich aufbewahren', 70, 13, 100, 12, 11, true),
-      block('Bienenwachstuch', 70, 28, 100, 10, 15, true),
-      block('plastikfrei und bis zu 500-mal wiederverwendbar', 70, 41, 100, 10, 8),
+      block('Lebensmittel umweltfreundlich aufbewahren', 70, 13, 55, 12, 11, true),
+      block('Bienenwachstuch', 70, 28, 55, 10, 15, true),
+      block('plastikfrei und bis zu 500-mal wiederverwendbar', 70, 41, 55, 10, 8),
       block('25 × 25 cm', 188, 25, 47, 16, 14, true),
     ];
   if (sample === 2)
@@ -117,17 +117,17 @@ function banderole(sample: number) {
         20,
         5.5,
       ),
-      block('IHR LOGO', 73, 13, 96, 10, 12, true),
-      block('Bienenwachstücher', 73, 27, 96, 8, 12, true),
+      block('IHR LOGO', 73, 13, 52, 10, 12, true),
+      block('Bienenwachstücher', 73, 27, 52, 8, 12, true),
       block(
         'Beeswax cloths\nThe alternative to cling film · reusable up to 500 times',
         73,
-        38,
-        96,
-        10,
+        37,
+        52,
+        13,
         7.5,
       ),
-      block('www.bergtuch.de', 73, 50, 96, 5, 6),
+      block('www.bergtuch.de', 73, 52, 52, 3, 6),
       block(
         'Vorteile / Advantages\nNatürliche Rohstoffe: Baumwolle, Bienenwachs, Kiefernharz. Plastikfrei & nachhaltig.\nNatural raw materials: cotton, beeswax, pine resin. Plastic free & sustainable.',
         182,
@@ -155,8 +155,8 @@ function banderole(sample: number) {
       19,
       6,
     ),
-    block('IHR LOGO', 73, 17, 96, 14, 16, true),
-    block(slogan, 73, 41, 96, 12, 8),
+    block('IHR LOGO', 73, 17, 52, 14, 16, true),
+    block(slogan, 73, 41, 52, 12, 8),
     block(
       'Inhaltsstoffe\nGOTS-zertifizierte Biobaumwolle, Kiefernharz aus Portugal, Bienenwachs aus kontrolliert biologischem Anbau (kba).',
       182,

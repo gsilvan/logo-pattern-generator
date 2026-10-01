@@ -879,6 +879,16 @@ h2 {
     padding-top: 4px;
     padding-bottom: 4px;
   }
+  .packWorkspace .viewMenu {
+    flex-basis: 100%;
+  }
+  .packWorkspace .viewMenu summary {
+    width: max-content;
+  }
+  .packWorkspace .viewMenu .menuPanel {
+    left: 0;
+    right: auto;
+  }
 }
 
 .packMarks {

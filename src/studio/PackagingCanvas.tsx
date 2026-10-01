@@ -4,7 +4,7 @@ import { textOptions } from './packagingText';
 import { useEffect, useRef, useState } from 'react';
 import { ActiveSelection, Canvas, FabricImage, Rect, Textbox, type FabricObject } from 'fabric';
 import { useStudio } from './store';
-import type { PackagingDocument, PackagingLayer, Project } from './model';
+import type { PackagingDocument, PackagingLayer, PackagingPage, Project } from './model';
 import { zoomAt, type Position, type Viewport } from './viewport';
 import { useWorkspaceView, ViewToolbar } from './WorkspaceView';
 import { packagingGuide } from './packagingTemplates';
@@ -23,7 +23,9 @@ type Props = SelectionProps & {
   onView: (view: Viewport) => void;
 };
 
-export function PackagingWorkspace(props: SelectionProps) {
+export function PackagingWorkspace(
+  props: SelectionProps & { onUpdatePage: (changes: Partial<PackagingPage>) => void },
+) {
   const page = props.document.pages[props.document.selectedPage];
   const controls = useWorkspaceView(
     `packaging-${props.document.kind}-${page.face}`,
@@ -32,7 +34,25 @@ export function PackagingWorkspace(props: SelectionProps) {
   );
   return (
     <>
-      <ViewToolbar controls={controls} fitLabel="Verpackung einpassen" />
+      <ViewToolbar controls={controls} fitLabel="Verpackung einpassen">
+        {props.document.kind === 'banderole' &&
+          (
+            [
+              ['cutMarksVisible', 'Schnittmarken'],
+              ['dieLinesVisible', 'Stanzkontur'],
+              ['innerGuidesVisible', 'Innere Hilfslinien'],
+            ] as const
+          ).map(([key, label]) => (
+            <label key={key}>
+              <input
+                type="checkbox"
+                checked={page[key] ?? true}
+                onChange={(event) => props.onUpdatePage({ [key]: event.target.checked })}
+              />
+              {label}
+            </label>
+          ))}
+      </ViewToolbar>
       <div
         className="packCanvasHost"
         ref={controls.host}

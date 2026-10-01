@@ -562,6 +562,7 @@ export function App() {
                 document={packagingDocument}
                 selectedIds={packagingSelection}
                 onSelection={setPackagingSelection}
+                onUpdatePage={updatePackagingPage}
               />
             </div>
           )}
@@ -1269,25 +1270,6 @@ export function App() {
                         </button>
                       </>
                     )}
-                  </section>
-                  <section>
-                    <h2>Druckmarken</h2>
-                    {(
-                      [
-                        ['cutMarksVisible', 'Schnittmarken'],
-                        ['dieLinesVisible', 'Stanzkontur'],
-                        ['innerGuidesVisible', 'Innere Hilfslinien'],
-                      ] as const
-                    ).map(([key, label]) => (
-                      <label key={key}>
-                        <input
-                          type="checkbox"
-                          checked={packagingPage[key] ?? true}
-                          onChange={(e) => updatePackagingPage({ [key]: e.target.checked })}
-                        />
-                        {label}
-                      </label>
-                    ))}
                   </section>
                 </>
               ) : (
