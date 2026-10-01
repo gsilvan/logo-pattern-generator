@@ -1294,6 +1294,11 @@ export function App() {
       {showExport && (
         <Dialog
           title="Exportieren"
+          className={
+            tab === 'packaging' && packagingKind === 'banderole'
+              ? 'banderoleExportDialog'
+              : undefined
+          }
           onClose={() => {
             if (!busy) setShowExport(false);
           }}

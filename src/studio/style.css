@@ -903,3 +903,44 @@ h2 {
   background: white;
   margin: 8px 0;
 }
+.banderoleExportDialog {
+  width: min(760px, calc(100vw - 32px));
+}
+.banderoleExportDialog .packExportOptions {
+  grid-column: 1/-1;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+.banderoleExportDialog .packExportOptions > label:not(.textField) {
+  grid-column: span 2;
+}
+.banderoleExportDialog .packExportOptions > .textField,
+.banderoleExportDialog .packExportOptions > .hint,
+.banderoleExportDialog .packExportOptions > button {
+  grid-column: span 3;
+}
+.banderoleExportDialog .packExportOptions > .textField {
+  display: block;
+  min-width: 0;
+}
+.banderoleExportDialog .packExportOptions > .hint {
+  align-self: center;
+  margin: 0;
+}
+.banderoleExportDialog .banderoleExportPreview,
+.banderoleExportDialog .packExportOptions > [role='alert'] {
+  grid-column: 1/-1;
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .banderoleExportDialog .packExportOptions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .banderoleExportDialog .packExportOptions > label:not(.textField),
+  .banderoleExportDialog .packExportOptions > .textField,
+  .banderoleExportDialog .packExportOptions > .hint,
+  .banderoleExportDialog .packExportOptions > button {
+    grid-column: 1;
+  }
+}
