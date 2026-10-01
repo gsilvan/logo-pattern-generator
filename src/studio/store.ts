@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { initialProject, type Project } from './model';
+import { initialProject, validateProject, type Project } from './model';
 import { del, get, set } from 'idb-keyval';
 const MAX_HISTORY = 30;
 let persistence: Promise<unknown> = Promise.resolve();
@@ -110,7 +110,7 @@ export const useStudio = create<State>((setState, getState) => ({
           await del(LEGACY_PROJECT_KEY);
         }
       }
-      if (p?.version === 1) setState({ project: p });
+      if (p) setState({ project: validateProject(p) });
     } finally {
       setState({ ready: true });
     }

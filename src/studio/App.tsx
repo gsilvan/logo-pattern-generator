@@ -1,10 +1,38 @@
+import { backgroundPlacement, pageMarks } from './banderoleGeometry';
+import { fontFamilies } from './fonts';
+import { symbolData } from './symbols';
+import { BanderolePreview } from './BanderolePreview';
 import { useEffect, useState, useRef, type ChangeEvent } from 'react';
 import { Workspace } from './Workspace';
 import { Dialog } from './Dialog';
 import { useStudio } from './store';
-import { cmToMm, mmToCm, parseCm, type Motif, type Project } from './model';
-import { readAsset, exportPng, exportPdf, openProject, saveProject } from './files';
-import { renderPackaging } from './render';
+import {
+  cmToMm,
+  mmToCm,
+  parseCm,
+  type Motif,
+  type Project,
+  type PackagingKind,
+  type PackagingDocument,
+  type PackagingLayer,
+  type PackagingPage,
+} from './model';
+import {
+  readAsset,
+  exportPng,
+  exportPdf,
+  exportPackagingPdf,
+  exportPackagingSvg,
+  openProject,
+  saveProject,
+} from './files';
+import { PackagingWorkspace, addPackagingText } from './PackagingCanvas';
+import { resetWorkspaceViews } from './WorkspaceView';
+import {
+  listPackagingTemplates,
+  makePackagingDocument,
+  packagingTypes,
+} from './packagingTemplates';
 const backgrounds = Object.values(
   import.meta.glob('../backgrounds/*.png', { eager: true, query: '?url', import: 'default' }),
 ) as string[];
@@ -98,56 +126,8 @@ function editNumber(
     />
   );
 }
-function PackPreview({ kind }: { kind: 'front' | 'back' | 'band' }) {
-  const project = useStudio((s) => s.project);
-  const [url, setUrl] = useState('');
-  const lastUrl = useRef('');
-  useEffect(
-    () => () => {
-      if (lastUrl.current) URL.revokeObjectURL(lastUrl.current);
-    },
-    [],
-  );
-  useEffect(() => {
-    let active = true;
-    const timer = setTimeout(() => {
-      void renderPackaging(project, kind, 65)
-        .then(
-          (c) =>
-            new Promise<Blob>((res, rej) =>
-              c.toBlob((b) => (b ? res(b) : rej(Error('Vorschau fehlgeschlagen')))),
-            ),
-        )
-        .then((b) => {
-          const next = URL.createObjectURL(b);
-          if (active) {
-            if (lastUrl.current) URL.revokeObjectURL(lastUrl.current);
-            lastUrl.current = next;
-            setUrl(next);
-          } else URL.revokeObjectURL(next);
-        })
-        .catch(console.error);
-    }, 140);
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [project, kind]);
-  return (
-    <figure className="packPreview">
-      {url ? (
-        <img src={url} alt={`${kind} Vorschau`} />
-      ) : (
-        <div className="packPending">Lade Vorschau…</div>
-      )}
-      <figcaption>
-        {kind === 'front' ? 'Vorderseite' : kind === 'back' ? 'Rückseite' : 'Banderole'}
-      </figcaption>
-    </figure>
-  );
-}
 export function App() {
-  const project = useStudio((s) => s.project),
+  const project = useStudio((s) => s.draft ?? s.project),
     update = useStudio((s) => s.update),
     setProject = useStudio((s) => s.setProject),
     restore = useStudio((s) => s.restore),
@@ -169,10 +149,35 @@ export function App() {
     [ppi, setPpi] = useState(300),
     [showNewSession, setShowNewSession] = useState(false),
     [sessionError, setSessionError] = useState('');
+  const [packagingKind, setPackagingKind] = useState<PackagingKind>('banderole');
+  const [packagingSelection, setPackagingSelection] = useState<string[]>([]);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [includeCutMarks, setIncludeCutMarks] = useState(true);
+  const [includeDieLines, setIncludeDieLines] = useState(true);
+  const [includeInnerGuides, setIncludeInnerGuides] = useState(true);
+  const [textMode, setTextMode] = useState<'text' | 'paths'>('text');
+  const [packagingExportPages, setPackagingExportPages] = useState(0);
+  const packagingDocument =
+    project.packagingDocuments?.[packagingKind] ?? makePackagingDocument(packagingKind);
+  const packagingPage = packagingDocument.pages[packagingDocument.selectedPage];
+  const bleedMm = packagingPage.bleedMm ?? 3;
+  const backgroundLayer = packagingPage.layers.find((layer) => layer.role === 'background');
+  const printOptions = {
+    cutMarks: includeCutMarks,
+    dieLines: includeDieLines,
+    innerGuides: includeInnerGuides,
+    textMode,
+  };
+  const packagingLayer = packagingPage.layers.find(
+    (layer) => packagingSelection.length === 1 && layer.id === packagingSelection[0],
+  );
   const activeExport = useRef<AbortController | null>(null);
   const selected = project.motifs.find((m) => m.id === selectedId);
   useEffect(() => {
     void restore();
+    const flush = () => useStudio.getState().commitTransform();
+    window.addEventListener('beforeunload', flush);
+    return () => window.removeEventListener('beforeunload', flush);
   }, []);
   useEffect(() => {
     const closeMenus = (event: PointerEvent) => {
@@ -252,6 +257,48 @@ export function App() {
     });
     event.target.value = '';
   }
+  async function uploadPackaging(event: ChangeEvent<HTMLInputElement>, background = false) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await run(async () => {
+      const asset = await readAsset(file);
+      const widthMm = Math.min(55, packagingPage.widthMm * 0.28);
+      const layer: PackagingLayer = {
+        id: crypto.randomUUID(),
+        name: file.name,
+        type: 'image',
+        dataUrl: asset.dataUrl,
+        xMm: packagingPage.widthMm / 2,
+        yMm: packagingPage.heightMm / 2,
+        widthMm,
+        heightMm: (widthMm * asset.height) / asset.width,
+        rotation: 0,
+        fontFamily: 'Arial',
+        fontSizePt: 12,
+        color: '#27303d',
+        bold: false,
+        italic: false,
+        visible: true,
+        locked: background,
+        ...(background
+          ? { role: 'background', ...backgroundPlacement(asset.width, asset.height, bleedMm) }
+          : {}),
+      };
+      if (background)
+        updatePackagingPage({
+          layers: [layer, ...packagingPage.layers.filter((item) => item.role !== 'background')],
+        });
+      else addPackagingLayer(layer);
+      setMessage(background ? 'Hintergrundbild hinzugefügt.' : 'Bild zur Verpackung hinzugefügt.');
+    });
+    event.target.value = '';
+  }
+  function loadPackagingTemplate(sample: number) {
+    updatePackagingDocument(makePackagingDocument(packagingKind, sample));
+    setPackagingSelection([]);
+    setShowTemplates(false);
+    setMessage('Beispiel geladen.');
+  }
   function deleteLayer(id: string) {
     update((p) => ({ ...p, motifs: p.motifs.filter((m) => m.id !== id) }));
     if (selectedIds.includes(id)) select(null);
@@ -265,6 +312,7 @@ export function App() {
     setSessionError('');
     try {
       await newSession();
+      resetWorkspaceViews();
       setTab('pattern');
       setToolsOpen(false);
       setSession((n) => n + 1);
@@ -302,6 +350,56 @@ export function App() {
     value: Project['packaging'][K],
   ) {
     update((p) => ({ ...p, packaging: { ...p.packaging, [key]: value } }));
+  }
+  function updatePackagingDocument(next: PackagingDocument) {
+    update((p) => ({ ...p, packagingDocuments: { ...p.packagingDocuments, [next.kind]: next } }));
+  }
+  function updatePackagingLayer(
+    id: string,
+    fn: (layer: PackagingLayer) => PackagingLayer,
+    preview = false,
+  ) {
+    const apply = (project: Project): Project => {
+      const document = project.packagingDocuments?.[packagingKind];
+      if (!document) return project;
+      return {
+        ...project,
+        packagingDocuments: {
+          ...project.packagingDocuments,
+          [packagingKind]: {
+            ...document,
+            pages: document.pages.map((page, index) =>
+              index !== document.selectedPage
+                ? page
+                : {
+                    ...page,
+                    layers: page.layers.map((layer) => (layer.id === id ? fn(layer) : layer)),
+                  },
+            ),
+          },
+        },
+      };
+    };
+    const state = useStudio.getState();
+    if (preview) state.previewTransform(apply(state.draft ?? state.project));
+    else state.update(apply);
+  }
+  function updatePackagingPage(changes: Partial<PackagingPage>) {
+    updatePackagingDocument({
+      ...packagingDocument,
+      pages: packagingDocument.pages.map((page, index) =>
+        index === packagingDocument.selectedPage ? { ...page, ...changes } : page,
+      ),
+    });
+  }
+  function addPackagingLayer(layer: PackagingLayer) {
+    const pages = [...packagingDocument.pages];
+    pages[packagingDocument.selectedPage] = {
+      ...packagingPage,
+      layers: [...packagingPage.layers, layer],
+    };
+    updatePackagingDocument({ ...packagingDocument, pages });
+    setPackagingSelection([layer.id]);
   }
   const effectivePpi =
     selected && project.assets.find((a) => a.id === selected.assetId)?.width
@@ -372,7 +470,7 @@ export function App() {
             Muster
           </button>
           <button aria-pressed={tab === 'packaging'} onClick={() => setTab('packaging')}>
-            Banderole
+            Verpackungen
           </button>
         </nav>
         <div className="headerActions">
@@ -390,7 +488,19 @@ export function App() {
           >
             Werkzeuge
           </button>
-          <button className="primary" disabled={!ready} onClick={() => setShowExport(true)}>
+          <button
+            className="primary"
+            disabled={!ready}
+            onClick={() => {
+              if (packagingKind === 'banderole') {
+                const marks = pageMarks(packagingPage);
+                setIncludeCutMarks(marks.cutMarks);
+                setIncludeDieLines(marks.dieLines);
+                setIncludeInnerGuides(marks.innerGuides);
+              }
+              setShowExport(true);
+            }}
+          >
             Exportieren
           </button>
         </div>
@@ -404,10 +514,55 @@ export function App() {
               <div className="loading">Projekt laden…</div>
             )
           ) : (
-            <div className="packGrid">
-              <PackPreview kind="front" />
-              <PackPreview kind="back" />
-              <PackPreview kind="band" />
+            <div className="packWorkspace">
+              <div className="packToolbar">
+                <label>
+                  Verpackung
+                  <select
+                    aria-label="Verpackungsart"
+                    value={packagingKind}
+                    onChange={(e) => {
+                      setPackagingKind(e.target.value as PackagingKind);
+                      setPackagingSelection([]);
+                    }}
+                  >
+                    {packagingTypes.map((type) => (
+                      <option key={type.kind} value={type.kind}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button onClick={() => setShowTemplates(true)}>Beispiel laden</button>
+                {packagingKind === 'carton' && (
+                  <label>
+                    Seite
+                    <select
+                      aria-label="Faltschachtelseite"
+                      value={packagingDocument.selectedPage}
+                      onChange={(e) =>
+                        updatePackagingDocument({
+                          ...packagingDocument,
+                          selectedPage: Number(e.target.value),
+                        })
+                      }
+                    >
+                      <option value={0}>Außen</option>
+                      <option value={1}>Innen</option>
+                    </select>
+                  </label>
+                )}
+                <span>
+                  {(packagingPage.widthMm / 10).toLocaleString('de-DE')} ×{' '}
+                  {(packagingPage.heightMm / 10).toLocaleString('de-DE')} cm
+                </span>
+              </div>
+              <PackagingWorkspace
+                key={`${packagingKind}-${packagingDocument.selectedPage}`}
+                document={packagingDocument}
+                selectedIds={packagingSelection}
+                onSelection={setPackagingSelection}
+              />
             </div>
           )}
         </div>
@@ -725,62 +880,424 @@ export function App() {
           ) : (
             <>
               <section>
-                <h2>Banderole</h2>
+                <h2>{packagingTypes.find((type) => type.kind === packagingKind)?.label}</h2>
+                <p className="hint">
+                  PDF-Seite {packagingPage.widthMm.toLocaleString('de-DE')} ×{' '}
+                  {packagingPage.heightMm.toLocaleString('de-DE')} mm
+                </p>
+                {packagingKind === 'banderole' && <p className="hint">Stanzmaß 235 × 47 mm</p>}
+                {packagingKind === 'banderole' && (
+                  <label className="textField">
+                    Beschnitt (mm)
+                    <select
+                      aria-label="Beschnitt (mm)"
+                      value={bleedMm}
+                      onChange={(e) => updatePackagingPage({ bleedMm: Number(e.target.value) })}
+                    >
+                      {[0, 1, 2, 3, 4, 5].map((n) => (
+                        <option key={n} value={n}>
+                          {n} mm
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                <button onClick={() => addPackagingLayer(addPackagingText(packagingDocument))}>
+                  + Text hinzufügen
+                </button>
+                <div className="iconChoices" aria-label="Textsymbol hinzufügen">
+                  {['♡', '✿', '✓', '♻'].map((symbol) => (
+                    <button
+                      key={symbol}
+                      aria-label={`Symbol ${symbol} hinzufügen`}
+                      onClick={() =>
+                        addPackagingLayer({
+                          ...addPackagingText(packagingDocument),
+                          name: `Symbol ${symbol}`,
+                          text: symbol,
+                          ...(packagingKind === 'banderole'
+                            ? { type: 'image' as const, dataUrl: symbolData(symbol) }
+                            : {}),
+                          fontSizePt: 28,
+                          widthMm: 18,
+                          heightMm: 18,
+                        })
+                      }
+                    >
+                      {symbol}
+                    </button>
+                  ))}
+                </div>
                 <label className="uploadButton">
-                  + Logo hochladen
+                  + Bild oder Logo hochladen
                   <input
-                    aria-label="Logo hochladen"
+                    aria-label="Bild oder Logo zur Verpackung hinzufügen"
                     type="file"
                     disabled={busy}
                     accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf"
-                    onChange={(e) => void upload(e, 'logo')}
+                    onChange={(e) => void uploadPackaging(e)}
                   />
                 </label>
-                <div className="fieldGrid">
-                  {editNumber(
-                    'Logobreite',
-                    project.packaging.logoWidthMm / 10,
-                    (n) => updatePack('logoWidthMm', cmToMm(n)),
-                    0.2,
-                    10,
-                  )}
-                  {editNumber(
-                    'Drehung',
-                    project.packaging.logoRotation,
-                    (n) => updatePack('logoRotation', n),
-                    -36000,
-                    36000,
-                    1,
-                    '°',
-                  )}
-                  {editNumber(
-                    'Position X',
-                    project.packaging.logoXMm / 10,
-                    (n) => updatePack('logoXMm', cmToMm(n)),
-                    -20,
-                    30,
-                  )}
-                  {editNumber(
-                    'Position Y',
-                    project.packaging.logoYMm / 10,
-                    (n) => updatePack('logoYMm', cmToMm(n)),
-                    -20,
-                    30,
-                  )}
-                </div>
+                <button className="secondary" onClick={() => setShowTemplates(true)}>
+                  Beispiele und leere Stanze
+                </button>
               </section>
-              <section>
-                <h2>Firmendaten</h2>
-                {(['company', 'street', 'zip', 'city'] as const).map((key, i) => (
-                  <label className="textField" key={key}>
-                    <span>{['Firma', 'Straße', 'PLZ', 'Ort'][i]}</span>
+              <section className="layersSection">
+                <div className="sectionHeader">
+                  <h2>
+                    Ebenen ·{' '}
+                    {packagingDocument.pages.reduce((sum, page) => sum + page.layers.length, 0)}
+                  </h2>
+                </div>
+                <div className="layers">
+                  {[...packagingPage.layers].reverse().map((layer) => (
+                    <div
+                      className={`layer ${packagingSelection.includes(layer.id) ? 'selected' : ''}`}
+                      key={layer.id}
+                    >
+                      <button
+                        className="layerName"
+                        aria-pressed={packagingSelection.includes(layer.id)}
+                        onClick={(e) =>
+                          setPackagingSelection((ids) =>
+                            e.shiftKey
+                              ? ids.includes(layer.id)
+                                ? ids.filter((id) => id !== layer.id)
+                                : [...ids, layer.id]
+                              : [layer.id],
+                          )
+                        }
+                      >
+                        {layer.type === 'image' && (
+                          <img src={layer.dataUrl} alt="" width={24} height={24} />
+                        )}
+                        <span>
+                          {layer.name}
+                          {layer.locked ? ' (gesperrt)' : ''}
+                        </span>
+                      </button>
+                      <button
+                        aria-label={`${layer.visible ? 'Ebene ausblenden' : 'Ebene einblenden'}: ${layer.name}`}
+                        onClick={() =>
+                          updatePackagingLayer(layer.id, (item) => ({
+                            ...item,
+                            visible: !item.visible,
+                          }))
+                        }
+                      >
+                        {layer.visible ? '◉' : '○'}
+                      </button>
+                      <button
+                        aria-label={`Ebene ${layer.name} nach oben`}
+                        disabled={
+                          layer.role === 'background' ||
+                          packagingPage.layers.at(-1)?.id === layer.id
+                        }
+                        onClick={() => {
+                          const layers = [...packagingPage.layers];
+                          const index = layers.findIndex((item) => item.id === layer.id);
+                          [layers[index], layers[index + 1]] = [layers[index + 1], layers[index]];
+                          const pages = [...packagingDocument.pages];
+                          pages[packagingDocument.selectedPage] = { ...packagingPage, layers };
+                          updatePackagingDocument({ ...packagingDocument, pages });
+                        }}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        aria-label={`Ebene ${layer.name} nach unten`}
+                        disabled={
+                          layer.role === 'background' ||
+                          packagingPage.layers[0]?.id === layer.id ||
+                          packagingPage.layers[
+                            packagingPage.layers.findIndex((item) => item.id === layer.id) - 1
+                          ]?.role === 'background'
+                        }
+                        onClick={() => {
+                          const layers = [...packagingPage.layers];
+                          const index = layers.findIndex((item) => item.id === layer.id);
+                          [layers[index], layers[index - 1]] = [layers[index - 1], layers[index]];
+                          const pages = [...packagingDocument.pages];
+                          pages[packagingDocument.selectedPage] = { ...packagingPage, layers };
+                          updatePackagingDocument({ ...packagingDocument, pages });
+                        }}
+                      >
+                        ↓
+                      </button>
+                      <button
+                        aria-label={`Ebene ${layer.name} duplizieren`}
+                        onClick={() =>
+                          addPackagingLayer({
+                            ...layer,
+                            role: undefined,
+                            locked: false,
+                            id: crypto.randomUUID(),
+                            name: `${layer.name} Kopie`,
+                            xMm: layer.xMm + 4,
+                            yMm: layer.yMm + 4,
+                          })
+                        }
+                      >
+                        ⧉
+                      </button>
+                      <button
+                        aria-label={`Ebene ${layer.name} löschen`}
+                        onClick={() => {
+                          updatePackagingDocument({
+                            ...packagingDocument,
+                            pages: packagingDocument.pages.map((page, index) =>
+                              index === packagingDocument.selectedPage
+                                ? {
+                                    ...page,
+                                    layers: page.layers.filter((item) => item.id !== layer.id),
+                                  }
+                                : page,
+                            ),
+                          });
+                          if (packagingSelection.includes(layer.id)) setPackagingSelection([]);
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {!packagingPage.layers.length && (
+                  <p className="hint">Diese Seite enthält noch keine Gestaltung.</p>
+                )}
+              </section>
+              {packagingLayer?.type === 'image' && (
+                <section>
+                  <h2>Bild</h2>
+                  <div className="fieldGrid">
+                    {(['xMm', 'yMm', 'widthMm', 'heightMm', 'rotation'] as const).map(
+                      (key, index) =>
+                        editNumber(
+                          ['Position X', 'Position Y', 'Breite', 'Höhe', 'Drehung'][index],
+                          key === 'rotation' ? packagingLayer[key] : packagingLayer[key] / 10,
+                          (value) =>
+                            updatePackagingLayer(packagingLayer.id, (layer) => ({
+                              ...layer,
+                              [key]: key === 'rotation' ? value : value * 10,
+                            })),
+                          key === 'widthMm' || key === 'heightMm' ? 0.01 : -360,
+                          1000,
+                          0.1,
+                          key === 'rotation' ? '°' : 'cm',
+                        ),
+                    )}
+                  </div>
+                </section>
+              )}
+              {packagingLayer && packagingLayer.type === 'text' && (
+                <section>
+                  <h2>Text</h2>
+                  {packagingLayer.replacedFont && (
+                    <p className="hint">
+                      Schrift ersetzt: {packagingLayer.replacedFont} → {packagingLayer.fontFamily}
+                    </p>
+                  )}
+                  <label className="textField">
+                    Ebenenname
                     <input
-                      value={project.packaging[key]}
-                      onChange={(e) => updatePack(key, e.target.value)}
+                      value={packagingLayer.name}
+                      onChange={(e) =>
+                        updatePackagingLayer(packagingLayer.id, (layer) => ({
+                          ...layer,
+                          name: e.target.value,
+                        }))
+                      }
                     />
                   </label>
-                ))}
-              </section>
+                  <label className="textField">
+                    Inhalt
+                    <textarea
+                      onFocus={() => useStudio.getState().beginTransform()}
+                      onBlur={() => useStudio.getState().commitTransform()}
+                      value={packagingLayer.text ?? ''}
+                      onChange={(e) =>
+                        updatePackagingLayer(
+                          packagingLayer.id,
+                          (layer) => ({
+                            ...layer,
+                            text: e.target.value,
+                          }),
+                          true,
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="textField">
+                    Schrift
+                    <select
+                      value={packagingLayer.fontFamily}
+                      onChange={(e) =>
+                        updatePackagingLayer(packagingLayer.id, (layer) => ({
+                          ...layer,
+                          fontFamily: e.target.value,
+                        }))
+                      }
+                    >
+                      {(packagingKind === 'banderole'
+                        ? fontFamilies
+                        : [
+                            'Arial',
+                            'Georgia',
+                            'Times New Roman',
+                            'Verdana',
+                            'Courier New',
+                            'system-ui',
+                          ]
+                      ).map((font) => (
+                        <option key={font}>{font}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="fieldGrid">
+                    {editNumber(
+                      'Schriftgröße',
+                      packagingLayer.fontSizePt,
+                      (n) =>
+                        updatePackagingLayer(packagingLayer.id, (layer) => ({
+                          ...layer,
+                          fontSizePt: n,
+                        })),
+                      4,
+                      200,
+                      1,
+                      'pt',
+                    )}
+                    {editNumber(
+                      'Drehung',
+                      packagingLayer.rotation,
+                      (n) =>
+                        updatePackagingLayer(packagingLayer.id, (layer) => ({
+                          ...layer,
+                          rotation: n,
+                        })),
+                      -360,
+                      360,
+                      1,
+                      '°',
+                    )}
+                  </div>
+                  <label className="field colorField">
+                    <span>Textfarbe</span>
+                    <input
+                      aria-label="Textfarbe"
+                      type="color"
+                      value={packagingLayer.color}
+                      onChange={(e) =>
+                        updatePackagingLayer(packagingLayer.id, (layer) => ({
+                          ...layer,
+                          color: e.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <button
+                    aria-pressed={packagingLayer.bold}
+                    onClick={() =>
+                      updatePackagingLayer(packagingLayer.id, (layer) => ({
+                        ...layer,
+                        bold: !layer.bold,
+                      }))
+                    }
+                  >
+                    Fett
+                  </button>
+                  <button
+                    aria-pressed={packagingLayer.italic}
+                    onClick={() =>
+                      updatePackagingLayer(packagingLayer.id, (layer) => ({
+                        ...layer,
+                        italic: !layer.italic,
+                      }))
+                    }
+                  >
+                    Kursiv
+                  </button>
+                </section>
+              )}
+              {packagingKind === 'banderole' ? (
+                <>
+                  <section>
+                    <h2>Hintergrund</h2>
+                    <label className="textField">
+                      Hintergrundfarbe
+                      <input
+                        type="color"
+                        value={packagingPage.background}
+                        onChange={(e) => updatePackagingPage({ background: e.target.value })}
+                      />
+                    </label>
+                    <label className="uploadButton">
+                      Hintergrundbild hochladen
+                      <input
+                        aria-label="Hintergrundbild der Banderole hochladen"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                        onChange={(e) => void uploadPackaging(e, true)}
+                      />
+                    </label>
+                    {backgroundLayer && (
+                      <>
+                        <button
+                          onClick={() => {
+                            updatePackagingLayer(backgroundLayer.id, (layer) => ({
+                              ...layer,
+                              locked: !layer.locked,
+                            }));
+                            setPackagingSelection(
+                              backgroundLayer.locked ? [backgroundLayer.id] : [],
+                            );
+                          }}
+                        >
+                          {backgroundLayer.locked ? 'Bild bearbeiten' : 'Bild sperren'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            updatePackagingPage({
+                              layers: packagingPage.layers.filter(
+                                (layer) => layer.role !== 'background',
+                              ),
+                            });
+                            setPackagingSelection([]);
+                          }}
+                        >
+                          Bild entfernen
+                        </button>
+                      </>
+                    )}
+                  </section>
+                  <section>
+                    <h2>Druckmarken</h2>
+                    {(
+                      [
+                        ['cutMarksVisible', 'Schnittmarken'],
+                        ['dieLinesVisible', 'Stanzkontur'],
+                        ['innerGuidesVisible', 'Innere Hilfslinien'],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <label key={key}>
+                        <input
+                          type="checkbox"
+                          checked={packagingPage[key] ?? true}
+                          onChange={(e) => updatePackagingPage({ [key]: e.target.checked })}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </section>
+                </>
+              ) : (
+                <section>
+                  <h2>Hilfslinien</h2>
+                  <p className="hint">
+                    Stanz- und Falzlinien werden beim PDF-Export separat zugeschaltet.
+                  </p>
+                </section>
+              )}
             </>
           )}
         </aside>
@@ -805,13 +1322,15 @@ export function App() {
               : 'Banderole und Verpackung'}{' '}
             · RGB · Maße 1:1
           </p>
-          <label className="textField">
-            Auflösung
-            <select value={ppi} disabled={busy} onChange={(e) => setPpi(Number(e.target.value))}>
-              <option value={300}>300 PPI · Druck</option>
-              <option value={150}>150 PPI · Entwurf</option>
-            </select>
-          </label>
+          {tab === 'pattern' && (
+            <label className="textField">
+              Auflösung
+              <select value={ppi} disabled={busy} onChange={(e) => setPpi(Number(e.target.value))}>
+                <option value={300}>300 PPI · Druck</option>
+                <option value={150}>150 PPI · Entwurf</option>
+              </select>
+            </label>
+          )}
           <div className="exportGrid">
             {tab === 'pattern' ? (
               <>
@@ -836,31 +1355,102 @@ export function App() {
                 </button>
               </>
             ) : (
-              <>
-                {(['front', 'back', 'band'] as const).map((kind) => (
-                  <div className="exportPair" key={kind}>
-                    <span>
-                      {kind === 'front'
-                        ? 'Vorderseite'
-                        : kind === 'back'
-                          ? 'Rückseite'
-                          : 'Banderole'}
-                    </span>
-                    <button
-                      disabled={busy}
-                      onClick={() => void run((signal) => exportPng(project, kind, ppi, signal))}
+              <div className="packExportOptions">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={includeCutMarks}
+                    onChange={(e) => setIncludeCutMarks(e.target.checked)}
+                  />{' '}
+                  Schnittmarken
+                </label>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={includeDieLines}
+                    onChange={(e) => setIncludeDieLines(e.target.checked)}
+                  />{' '}
+                  {packagingKind === 'banderole' ? 'Stanzkontur' : 'Stanz- und Falzlinien'}
+                </label>
+                {packagingKind === 'banderole' && (
+                  <>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={includeInnerGuides}
+                        onChange={(e) => setIncludeInnerGuides(e.target.checked)}
+                      />
+                      Innere Hilfslinien
+                    </label>
+                    <label className="textField">
+                      Textausgabe
+                      <select
+                        value={textMode}
+                        onChange={(e) => setTextMode(e.target.value as 'text' | 'paths')}
+                      >
+                        <option value="text">Bearbeitbarer Text</option>
+                        <option value="paths">Text als Pfade</option>
+                      </select>
+                    </label>
+                    <p className="hint">Beschnitt {bleedMm} mm · Endformat 235 × 47 mm</p>
+                    <BanderolePreview document={packagingDocument} options={printOptions} />
+                  </>
+                )}
+                {packagingKind === 'carton' && (
+                  <label>
+                    Seiten
+                    <select
+                      aria-label="PDF-Seiten der Faltschachtel"
+                      onChange={(e) => setPackagingExportPages(Number(e.target.value))}
+                      value={packagingExportPages}
                     >
-                      PNG
-                    </button>
-                    <button
-                      disabled={busy}
-                      onClick={() => void run((signal) => exportPdf(project, kind, ppi, signal))}
-                    >
-                      PDF
-                    </button>
-                  </div>
-                ))}
-              </>
+                      <option value={0}>Außen und innen</option>
+                      <option value={1}>Nur innen</option>
+                      <option value={2}>Nur außen</option>
+                    </select>
+                  </label>
+                )}
+                <button
+                  className="primary"
+                  disabled={busy}
+                  onClick={() =>
+                    void run(async () => {
+                      let selectedDocument = packagingDocument;
+                      if (packagingKind === 'carton') {
+                        if (packagingExportPages === 1)
+                          selectedDocument = {
+                            ...packagingDocument,
+                            pages: [packagingDocument.pages[1]],
+                          };
+                        if (packagingExportPages === 2)
+                          selectedDocument = {
+                            ...packagingDocument,
+                            pages: [packagingDocument.pages[0]],
+                          };
+                      }
+                      await exportPackagingPdf(selectedDocument, {
+                        cutMarks: includeCutMarks,
+                        dieLines: includeDieLines,
+                        innerGuides: includeInnerGuides,
+                        textMode,
+                      });
+                    })
+                  }
+                >
+                  Verpackung als PDF
+                </button>
+                {packagingKind === 'banderole' && (
+                  <button
+                    disabled={busy}
+                    onClick={() =>
+                      void run(() => exportPackagingSvg(packagingDocument, printOptions))
+                    }
+                  >
+                    Banderole als SVG
+                  </button>
+                )}
+              </div>
             )}
           </div>
           {message && <p aria-live="polite">{message}</p>}
@@ -870,6 +1460,24 @@ export function App() {
             ) : (
               <button onClick={() => setShowExport(false)}>Schließen</button>
             )}
+          </div>
+        </Dialog>
+      )}
+      {showTemplates && (
+        <Dialog title="Beispiel laden" onClose={() => setShowTemplates(false)}>
+          <p>
+            Vorlagen haben die Originalmaße der Stanze. Das Laden ersetzt den Entwurf dieser
+            Verpackungsart.
+          </p>
+          <div className="templateChoices">
+            {listPackagingTemplates(packagingKind).map((template) => (
+              <button key={template.id} onClick={() => loadPackagingTemplate(template.sample)}>
+                {template.name}
+              </button>
+            ))}
+          </div>
+          <div className="dialogActions">
+            <button onClick={() => setShowTemplates(false)}>Schließen</button>
           </div>
         </Dialog>
       )}

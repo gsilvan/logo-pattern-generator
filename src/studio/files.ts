@@ -1,4 +1,7 @@
-import type { Asset, Project } from './model';
+import { banderolePdf, banderoleSvg } from './banderoleExport';
+import { pageMarks, type PrintOptions } from './banderoleGeometry';
+import { packagingGuide } from './packagingTemplates';
+import type { Asset, PackagingDocument, PackagingKind, Project } from './model';
 import { validateProject } from './model';
 import { renderTile, renderSheet, renderPackaging } from './render';
 import { canvasToPrintPng, downloadBlob } from '../pngExport';
@@ -106,6 +109,183 @@ export async function exportPdf(
   pdf.addImage(url, 'PNG', 0, 0, w, h, undefined, 'FAST');
   signal?.throwIfAborted();
   downloadBlob(pdf.output('blob'), `Musterersteller_${kind}_${ppi}ppi.pdf`);
+}
+export async function exportPackagingPdf(
+  document: PackagingDocument,
+  options: {
+    cutMarks: boolean;
+    dieLines: boolean;
+    innerGuides?: boolean;
+    textMode?: 'text' | 'paths';
+  },
+) {
+  if (document.kind === 'banderole') {
+    const pdf = await banderolePdf(document, {
+      ...pageMarks(document.pages[document.selectedPage]),
+      textMode: 'text',
+      ...options,
+    });
+    pdf.save(`Verpackung_banderole_${document.templateId}.pdf`);
+    return;
+  }
+  const { jsPDF } = await import('jspdf');
+  const first = document.pages[0];
+  const pdf = new jsPDF({
+    unit: 'mm',
+    format: [first.widthMm, first.heightMm],
+    orientation: first.widthMm > first.heightMm ? 'landscape' : 'portrait',
+    compress: true,
+  });
+  for (const [pageIndex, page] of document.pages.entries()) {
+    if (pageIndex)
+      pdf.addPage(
+        [page.widthMm, page.heightMm],
+        page.widthMm > page.heightMm ? 'landscape' : 'portrait',
+      );
+    pdf.setFillColor(page.background);
+    pdf.rect(0, 0, page.widthMm, page.heightMm, 'F');
+    if (options.dieLines) {
+      const response = await fetch(packagingGuide(document, page));
+      if (!response.ok) throw new Error('Stanzvorlage konnte nicht geladen werden.');
+      const svg = await response.text();
+      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const element = new Image();
+        element.onload = () => resolve(element);
+        element.onerror = () => reject(new Error('Stanzvorlage konnte nicht dargestellt werden.'));
+        element.src = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+      });
+      const guideCanvas = globalThis.document.createElement('canvas');
+      guideCanvas.width = Math.ceil((page.widthMm * 300) / 25.4);
+      guideCanvas.height = Math.ceil((page.heightMm * 300) / 25.4);
+      const context = guideCanvas.getContext('2d');
+      if (!context) throw new Error('Stanzvorlage kann nicht exportiert werden.');
+      context.drawImage(image, 0, 0, guideCanvas.width, guideCanvas.height);
+      URL.revokeObjectURL(image.src);
+      pdf.addImage(
+        guideCanvas.toDataURL('image/png'),
+        'PNG',
+        0,
+        0,
+        page.widthMm,
+        page.heightMm,
+        undefined,
+        'FAST',
+      );
+    }
+    for (const layer of page.layers) {
+      if (!layer.visible) continue;
+      if (layer.type === 'text') {
+        const font =
+          layer.fontFamily.includes('Mono') || layer.fontFamily.includes('Courier')
+            ? 'courier'
+            : layer.fontFamily.includes('Serif') ||
+                layer.fontFamily.includes('Georgia') ||
+                layer.fontFamily.includes('Times')
+              ? 'times'
+              : 'helvetica';
+        pdf.setFont(
+          font,
+          layer.bold && layer.italic
+            ? 'bolditalic'
+            : layer.bold
+              ? 'bold'
+              : layer.italic
+                ? 'italic'
+                : 'normal',
+        );
+        pdf.setFontSize(layer.fontSizePt);
+        pdf.setTextColor(layer.color);
+        const lines = pdf.splitTextToSize(layer.text ?? '', layer.widthMm);
+        const lineHeight = ((layer.fontSizePt * 25.4) / 72) * 1.2;
+        const height = Math.max(lineHeight, lines.length * lineHeight);
+        const angle = (layer.rotation * Math.PI) / 180;
+        pdf.advancedAPI(() => {
+          pdf.setCurrentTransformationMatrix(
+            pdf.Matrix(
+              Math.cos(angle),
+              Math.sin(angle),
+              -Math.sin(angle),
+              Math.cos(angle),
+              layer.xMm,
+              layer.yMm,
+            ),
+          );
+          pdf.text(lines, -layer.widthMm / 2, -height / 2 + lineHeight * 0.8, {
+            baseline: 'alphabetic',
+            lineHeightFactor: 1.2,
+          });
+        });
+      } else if (layer.dataUrl) {
+        let imageData = layer.dataUrl;
+        if (imageData.startsWith('data:image/svg')) {
+          const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const element = new Image();
+            element.onload = () => resolve(element);
+            element.onerror = () =>
+              reject(new Error(`SVG konnte nicht exportiert werden: ${layer.name}`));
+            element.src = imageData;
+          });
+          const canvas = globalThis.document.createElement('canvas');
+          canvas.width = image.naturalWidth;
+          canvas.height = image.naturalHeight;
+          const context = canvas.getContext('2d');
+          if (!context) throw new Error('SVG kann nicht für den PDF-Export vorbereitet werden.');
+          context.drawImage(image, 0, 0);
+          imageData = canvas.toDataURL('image/png');
+        }
+        const format = imageData.startsWith('data:image/jpeg')
+          ? 'JPEG'
+          : imageData.startsWith('data:image/webp')
+            ? 'WEBP'
+            : 'PNG';
+        const angle = (layer.rotation * Math.PI) / 180;
+        pdf.advancedAPI(() => {
+          pdf.setCurrentTransformationMatrix(
+            pdf.Matrix(
+              Math.cos(angle),
+              Math.sin(angle),
+              -Math.sin(angle),
+              Math.cos(angle),
+              layer.xMm,
+              layer.yMm,
+            ),
+          );
+          pdf.addImage(
+            imageData,
+            format,
+            -layer.widthMm / 2,
+            -layer.heightMm / 2,
+            layer.widthMm,
+            layer.heightMm,
+            undefined,
+            'FAST',
+          );
+        });
+      }
+    }
+    if (options.cutMarks) {
+      pdf.setDrawColor(35, 35, 35);
+      pdf.setLineWidth(0.15);
+      const edge = 5,
+        arm = 2.5;
+      for (const [x, y] of [
+        [edge, edge],
+        [page.widthMm - edge, edge],
+        [edge, page.heightMm - edge],
+        [page.widthMm - edge, page.heightMm - edge],
+      ]) {
+        pdf.line(x - arm, y, x + arm, y);
+        pdf.line(x, y - arm, x, y + arm);
+      }
+    }
+  }
+  const name = document.templateId.replace(/[^a-z0-9-]+/gi, '_');
+  pdf.save(`Verpackung_${document.kind}_${name}.pdf`);
+}
+
+export async function exportPackagingSvg(document: PackagingDocument, options: PrintOptions) {
+  const { svg } = await banderoleSvg(document, options);
+  downloadBlob(new Blob([svg], { type: 'image/svg+xml' }), `Banderole_${document.templateId}.svg`);
 }
 export async function saveProject(p: Project) {
   const { default: JSZip } = await import('jszip');

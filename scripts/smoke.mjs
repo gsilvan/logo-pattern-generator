@@ -271,18 +271,45 @@ try {
     .getByLabel('Motiv hochladen', { exact: true })
     .setInputFiles({ name: 'artwork.pdf', mimeType: 'application/pdf', buffer: pdf });
   await page.getByRole('status').filter({ hasText: 'Fertig.' }).waitFor({ timeout: 20000 });
-  await page.getByRole('button', { name: 'Banderole', exact: true }).click();
-  await page.waitForFunction(() => {
-    const images = [...document.querySelectorAll('.packPreview img')];
-    return images.length === 3 && images.every((image) => image.complete && image.naturalWidth > 0);
+  await page.getByRole('button', { name: 'Verpackungen', exact: true }).click();
+  await page.locator('.packCanvasHost').waitFor();
+  await page.getByRole('button', { name: 'Beispiel laden', exact: true }).first().click();
+  await page
+    .getByRole('dialog', { name: 'Beispiel laden' })
+    .getByRole('button', { name: 'Pflege & Inhaltsstoffe', exact: true })
+    .click();
+  const banderole = (await state()).project.packagingDocuments.banderole;
+  assert.equal(banderole.pages.length, 1);
+  assert.equal(banderole.pages[0].layers.length, 6);
+  const guide = await page.locator('.packMarks').evaluate((svg) => {
+    const lines = [...svg.querySelectorAll('line[stroke="#33b540"]')];
+    return {
+      left: Math.min(...lines.map((l) => +l.getAttribute('x1'))),
+      top: Math.min(...lines.map((l) => +l.getAttribute('y1'))),
+      right: Math.max(...lines.map((l) => +l.getAttribute('x2'))),
+      bottom: Math.max(...lines.map((l) => +l.getAttribute('y2'))),
+    };
   });
+  assert.ok(Math.abs(guide.left - 10.001) < 0.00001);
+  assert.ok(Math.abs(guide.top - 9.7915) < 0.00001);
+  assert.ok(Math.abs(guide.right - guide.left - 235) < 0.00001);
+  assert.ok(Math.abs(guide.bottom - guide.top - 47) < 0.00001);
   await page.getByRole('button', { name: 'Exportieren', exact: true }).click();
+  await page
+    .getByRole('dialog')
+    .getByRole('checkbox', { name: 'Schnittmarken', exact: true })
+    .check();
+  await page
+    .getByRole('dialog')
+    .getByRole('checkbox', { name: 'Stanzkontur', exact: true })
+    .check();
   const band = await Promise.all([
     page.waitForEvent('download'),
-    page.locator('.exportPair').last().getByRole('button', { name: 'PNG', exact: true }).click(),
+    page.getByRole('button', { name: 'Verpackung als PDF', exact: true }).click(),
   ]).then((x) => x[0]);
   const bandBytes = await readFile(await band.path());
-  assert.equal(bandBytes.readUInt32BE(16), Math.round((230 / 25.4) * 300));
+  assert.equal(bandBytes.subarray(0, 4).toString(), '%PDF');
+  assert.match(bandBytes.toString('latin1'), /\/Count\s+1\b/);
   await page.getByRole('button', { name: 'Schließen', exact: true }).click();
   await page.getByRole('button', { name: 'Muster', exact: true }).click();
   // A new session clears document/history and resets the view. Opening old ZIPs still works.

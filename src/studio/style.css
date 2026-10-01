@@ -570,6 +570,121 @@ h2 {
   padding: 24px;
   align-content: start;
 }
+.packWorkspace {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.packToolbar {
+  flex: none;
+  min-height: 41px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+.packToolbar label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.packToolbar select {
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: #fff;
+  color: #27303d;
+}
+.packToolbar > span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+.packCanvasHost {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background-color: #eef0f3;
+  background-image:
+    linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
+    linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
+    linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+  background-size: 18px 18px;
+  background-position:
+    0 0,
+    0 9px,
+    9px -9px,
+    -9px 0;
+}
+.packCanvasHost canvas {
+  display: block;
+}
+.packExportOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.packExportOptions label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.templateChoices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.templateChoices button {
+  min-height: 42px;
+  justify-content: flex-start;
+  white-space: normal;
+  text-align: left;
+}
+.iconChoices {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+}
+.iconChoices button {
+  min-width: 34px;
+  font-size: 17px;
+}
+.textField textarea {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+  min-height: 84px;
+  resize: vertical;
+  padding: 7px;
+  border: 1px solid #cdd4de;
+  border-radius: 3px;
+  background: white;
+  color: #27303d;
+  font: inherit;
+  line-height: 1.4;
+}
+@media (max-width: 500px) {
+  .packToolbar {
+    flex-wrap: wrap;
+    min-height: 48px;
+  }
+  .packToolbar > span {
+    margin-left: 0;
+  }
+  .templateChoices {
+    grid-template-columns: 1fr;
+  }
+}
 .packPreview {
   margin: 0;
   background: #fff;
@@ -748,4 +863,33 @@ h2 {
     text-align: center;
     width: 210px;
   }
+}
+
+.packCanvasHost {
+  touch-action: none;
+}
+@media (max-width: 500px) {
+  .packToolbar {
+    flex-wrap: wrap;
+  }
+  .packWorkspace .viewToolbar {
+    height: auto;
+    min-height: 41px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+}
+
+.packMarks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.banderoleExportPreview {
+  display: block;
+  width: 100%;
+  border: 1px solid #dce0e5;
+  background: white;
+  margin: 8px 0;
 }

@@ -1,51 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Editor } from './Editor';
 import { PatternSurface } from './PatternSurface';
-import { Dialog } from './Dialog';
 import { useStudio } from './store';
-import { BASE_SCALE, fitView, zoomAt, type Viewport } from './viewport';
+import { useWorkspaceView, ViewToolbar } from './WorkspaceView';
 
 const cm = (mm: number) =>
   new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(mm / 10);
 export function Workspace() {
-  const project = useStudio((s) => s.project),
-    host = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ width: 1, height: 1 });
-  const [view, setView] = useState<Viewport>({ x: 0, y: 0, scale: BASE_SCALE });
+  const project = useStudio((s) => s.project);
+  const controls = useWorkspaceView('pattern', project.sheetWidthMm, project.sheetHeightMm);
+  const { host, size, view, onView: setView, hand } = controls;
   const [bounds, setBounds] = useState(true),
-    [sheet, setSheet] = useState(true),
-    [hand, setHand] = useState(false);
-  const [calibration, setCalibration] = useState(false),
-    [measured, setMeasured] = useState('5'),
-    [calibratedScale, setCalibratedScale] = useState(BASE_SCALE);
-  useEffect(() => {
-    const element = host.current;
-    if (!element) return;
-    let initial = true;
-    const observer = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect;
-      if (width < 1 || height < 1) return;
-      setSize({ width, height });
-      if (initial) {
-        const p = useStudio.getState().project;
-        setView(fitView(width, height, p.sheetWidthMm, p.sheetHeightMm));
-        initial = false;
-      }
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-  const center = { x: size.width / 2, y: size.height / 2 };
-  const zoom = (factor: number) => setView((v) => zoomAt(v, center, v.scale * factor));
-  const fit = (tile = false) =>
-    setView(
-      fitView(
-        size.width,
-        size.height,
-        tile ? project.tileWidthMm : project.sheetWidthMm,
-        tile ? project.tileHeightMm : project.sheetHeightMm,
-      ),
-    );
+    [sheet, setSheet] = useState(true);
   const tw = project.tileWidthMm * view.scale,
     th = project.tileHeightMm * view.scale;
   const lines: string[] = [];
@@ -58,61 +24,23 @@ export function Workspace() {
   const label = `Tuch · ${cm(project.sheetWidthMm)} × ${cm(project.sheetHeightMm)} cm`;
   return (
     <div className="patternWorkspace">
-      <div className="viewToolbar" aria-label="Ansicht">
-        <div className="toolGroup">
-          <button
-            aria-label="Auswählen"
-            aria-pressed={!hand}
-            title="Auswählen"
-            onClick={() => setHand(false)}
-          >
-            ↖
-          </button>
-          <button
-            aria-label="Ansicht verschieben"
-            aria-pressed={hand}
-            title="Verschieben · Leertaste halten"
-            onClick={() => setHand(!hand)}
-          >
-            ✥
-          </button>
-        </div>
-        <div className="toolGroup">
-          <button aria-label="Verkleinern" onClick={() => zoom(1 / 1.2)}>
-            −
-          </button>
-          <output aria-label="Zoom">{Math.round((view.scale / BASE_SCALE) * 100)} %</output>
-          <button aria-label="Vergrößern" onClick={() => zoom(1.2)}>
-            +
-          </button>
-        </div>
-        <button onClick={() => fit()}>Tuch einpassen</button>
-        <details className="viewMenu">
-          <summary>Ansicht</summary>
-          <div className="menuPanel">
-            <button onClick={() => fit(true)}>Kachel einpassen</button>
-            <label>
-              <input
-                type="checkbox"
-                checked={bounds}
-                onChange={(e) => setBounds(e.target.checked)}
-              />
-              Kachelgrenzen
-            </label>
-            <label>
-              <input type="checkbox" checked={sheet} onChange={(e) => setSheet(e.target.checked)} />
-              Tuchrahmen
-            </label>
-            <button onClick={() => setView((v) => zoomAt(v, center, calibratedScale))}>
-              Ungefähre Originalgröße
-            </button>
-            <button onClick={() => setCalibration(true)}>Bildschirm kalibrieren</button>
-          </div>
-        </details>
-        <span className="viewDimensions">
-          Kachel {cm(project.tileWidthMm)} × {cm(project.tileHeightMm)} cm
-        </span>
-      </div>
+      <ViewToolbar
+        controls={controls}
+        fitLabel="Tuch einpassen"
+        dimensions={`Kachel ${cm(project.tileWidthMm)} × ${cm(project.tileHeightMm)} cm`}
+      >
+        <button onClick={() => controls.fit(project.tileWidthMm, project.tileHeightMm)}>
+          Kachel einpassen
+        </button>
+        <label>
+          <input type="checkbox" checked={bounds} onChange={(e) => setBounds(e.target.checked)} />
+          Kachelgrenzen
+        </label>
+        <label>
+          <input type="checkbox" checked={sheet} onChange={(e) => setSheet(e.target.checked)} />
+          Tuchrahmen
+        </label>
+      </ViewToolbar>
       <div
         className="canvasViewport"
         ref={host}
@@ -161,46 +89,6 @@ export function Workspace() {
           <div className="emptyCanvas">Motiv über „Motiv hochladen“ hinzufügen.</div>
         )}
       </div>
-      {calibration && (
-        <Dialog title="Bildschirm kalibrieren" onClose={() => setCalibration(false)}>
-          <p>Miss diese Strecke mit einem Lineal und trage die gemessene Länge ein.</p>
-          <div className="calibrationLine" style={{ width: BASE_SCALE * 50 }}>
-            5 cm Referenz
-          </div>
-          <label className="textField">
-            Gemessene Länge (cm)
-            <input
-              inputMode="decimal"
-              value={measured}
-              onChange={(e) => setMeasured(e.target.value)}
-            />
-          </label>
-          <p className="hint">
-            Nach Browser-Zoom oder Bildschirmwechsel erneut kalibrieren. Die Exportmaße bleiben
-            unverändert.
-          </p>
-          <div className="dialogActions">
-            <button onClick={() => setCalibration(false)}>Abbrechen</button>
-            <button
-              className="primary"
-              disabled={
-                !(
-                  Number(measured.replace(',', '.')) >= 1 &&
-                  Number(measured.replace(',', '.')) <= 20
-                )
-              }
-              onClick={() => {
-                const scale = (BASE_SCALE * 5) / Number(measured.replace(',', '.'));
-                setCalibratedScale(scale);
-                setView((v) => zoomAt(v, center, scale));
-                setCalibration(false);
-              }}
-            >
-              Originalgröße anzeigen
-            </button>
-          </div>
-        </Dialog>
-      )}
     </div>
   );
 }
