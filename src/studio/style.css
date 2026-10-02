@@ -305,6 +305,31 @@ h2 {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
 }
+.layerAddActions {
+  display: grid;
+  gap: 6px;
+}
+.layerAddAction {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 5px 9px;
+  border: 1px solid #cdd4de;
+  border-radius: 3px;
+  background: #fff;
+  text-align: left;
+  font-weight: 500;
+}
+.layerAddIcon {
+  flex: none;
+  width: 14px;
+  color: var(--accent);
+  font-weight: 700;
+  text-align: center;
+}
 .hint {
   font-size: 11px;
   line-height: 1.5;

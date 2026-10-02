@@ -972,19 +972,6 @@ export function App() {
                   <p className="hint">Gefaltet: DIN C6 · 114 × 162 mm</p>
                 )}
                 <p className="hint">Beschnitt: {packagingBleedMm} mm</p>
-                <button onClick={() => addPackagingLayer(addPackagingText(packagingDocument))}>
-                  + Text hinzufügen
-                </button>
-                <label className="uploadButton">
-                  + Bild oder Logo hochladen
-                  <input
-                    aria-label="Bild oder Logo zur Verpackung hinzufügen"
-                    type="file"
-                    disabled={busy}
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf"
-                    onChange={(e) => void uploadPackaging(e)}
-                  />
-                </label>
                 <button className="secondary" onClick={() => setShowTemplates(true)}>
                   Beispiele und leere Stanze
                 </button>
@@ -995,6 +982,30 @@ export function App() {
                     Ebenen ·{' '}
                     {packagingDocument.pages.reduce((sum, page) => sum + page.layers.length, 0)}
                   </h2>
+                </div>
+                <div className="layerAddActions">
+                  <button
+                    className="layerAddAction"
+                    onClick={() => addPackagingLayer(addPackagingText(packagingDocument))}
+                  >
+                    <span className="layerAddIcon" aria-hidden="true">
+                      +
+                    </span>
+                    Text hinzufügen
+                  </button>
+                  <label className="uploadButton layerAddAction">
+                    <span className="layerAddIcon" aria-hidden="true">
+                      +
+                    </span>
+                    Bild oder Logo hinzufügen
+                    <input
+                      aria-label="Bild oder Logo zur Verpackung hinzufügen"
+                      type="file"
+                      disabled={busy}
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf"
+                      onChange={(e) => void uploadPackaging(e)}
+                    />
+                  </label>
                 </div>
                 <div className="layers">
                   {[...packagingPage.layers].reverse().map((layer) => (

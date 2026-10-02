@@ -52,7 +52,16 @@ try {
   await page.goto(process.env.APP_URL || 'http://127.0.0.1:5173/');
   await page.locator('.upper-canvas').waitFor();
   await page.getByRole('button', { name: 'Verpackungen', exact: true }).click();
-  await page.getByRole('button', { name: '+ Text hinzufügen', exact: true }).click();
+  const addActions = page.locator('.layersSection .layerAddActions');
+  assert.equal(await addActions.count(), 1);
+  const [textAction, imageAction] = await Promise.all([
+    addActions.getByRole('button', { name: 'Text hinzufügen', exact: true }).boundingBox(),
+    addActions.locator('.uploadButton').boundingBox(),
+  ]);
+  assert.ok(Math.abs(textAction.x - imageAction.x) < 1);
+  assert.ok(Math.abs(textAction.width - imageAction.width) < 1);
+  assert.ok(imageAction.y > textAction.y);
+  await page.getByRole('button', { name: 'Text hinzufügen', exact: true }).click();
   await paint();
   const text = page.getByRole('textbox', { name: 'Inhalt', exact: true });
   const before = await state(),
@@ -180,7 +189,7 @@ try {
   await paint();
   assert.ok(Math.abs((await layer()).xMm - old.xMm - 20 / (await camera()).scale) < 0.2);
   assert.equal((await layer()).text, old.text);
-  await page.getByRole('button', { name: '+ Text hinzufügen', exact: true }).click();
+  await page.getByRole('button', { name: 'Text hinzufügen', exact: true }).click();
   await page
     .locator('.layerName')
     .last()
@@ -440,7 +449,24 @@ try {
     (await cartonPage()).layers.some((layer) => layer.role === 'background'),
     false,
   );
+  const layerCount = (await cartonPage()).layers.length;
+  await page.getByLabel('Bild oder Logo zur Verpackung hinzufügen').setInputFiles({
+    name: 'logo.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/NisAAAAASUVORK5CYII=',
+      'base64',
+    ),
+  });
+  await page.waitForFunction(
+    (count) => document.querySelectorAll('.layersSection .layer').length === count + 1,
+    layerCount,
+  );
+  assert.equal((await cartonPage()).layers.length, layerCount + 1);
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Werkzeuge', exact: true }).click();
+  assert.ok(await addActions.getByRole('button', { name: 'Text hinzufügen' }).isVisible());
+  assert.ok(await addActions.locator('.uploadButton').isVisible());
   await paint();
   await page.screenshot({ path: `${output}/mobile.png` });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));

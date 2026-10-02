@@ -25,7 +25,7 @@ try {
   await page.getByRole('button', { name: 'Verpackungen', exact: true }).click();
   assert.equal(await page.locator('.iconChoices').count(), 0);
   assert.equal(await page.getByLabel('Beschnitt (mm)').count(), 0);
-  await page.getByRole('button', { name: '+ Text hinzufügen', exact: true }).click();
+  await page.getByRole('button', { name: 'Text hinzufügen', exact: true }).click();
   await page.getByRole('button', { name: 'Lokale Schriften freigeben' }).click();
   assert.ok(
     await page
