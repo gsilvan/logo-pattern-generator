@@ -54,6 +54,21 @@ describe('physical geometry and repeat cycles', () => {
       banderole.pages[0].layers.length,
     );
   });
+  it('updates saved banderole media without moving existing artwork', () => {
+    const banderole = makePackagingDocument('banderole', 0);
+    const page = banderole.pages[0];
+    const loaded = validateProject({
+      ...initialProject,
+      packagingDocuments: {
+        banderole: {
+          ...banderole,
+          pages: [{ ...page, widthMm: 255.002, heightMm: 66.583 }],
+        },
+      },
+    }).packagingDocuments!.banderole!.pages[0];
+    expect([loaded.widthMm, loaded.heightMm]).toEqual([255, 67]);
+    expect(loaded.layers[0]).toEqual(page.layers[0]);
+  });
   it('preserves positions, backgrounds and marks while mapping old fonts on every die', () => {
     for (const kind of ['envelope', 'rigid', 'carton'] as const) {
       const doc = makePackagingDocument(kind, 0);

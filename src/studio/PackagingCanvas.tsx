@@ -1,4 +1,4 @@
-import { markColor, markWidth, pageMarks } from './banderoleGeometry';
+import { markColor, markWidth, pageMarks, stickerClips, stickerPaths } from './banderoleGeometry';
 import { dieMarkup, printGeometry } from './packagingGeometry';
 import { loadFont } from './fonts';
 import { textOptions } from './packagingText';
@@ -42,7 +42,7 @@ export function PackagingWorkspace(
             ['dieLinesVisible', 'Stanzkontur'],
             [
               'innerGuidesVisible',
-              props.document.kind === 'banderole' ? 'Innere Hilfslinien' : 'Falzlinien',
+              props.document.kind === 'banderole' ? 'Hilfslinien' : 'Falzlinien',
             ],
           ] as const
         ).map(([key, label]) => (
@@ -569,6 +569,9 @@ export function PackagingCanvas(props: Props) {
           {geometry.die && pageMarks(page).innerGuides && (
             <g dangerouslySetInnerHTML={{ __html: dieMarkup(geometry.die, 'fold') }} />
           )}
+          {props.document.kind === 'banderole' && pageMarks(page).innerGuides && (
+            <BanderoleStickerGuides />
+          )}
         </g>
       </svg>
       {error && (
@@ -577,6 +580,37 @@ export function PackagingCanvas(props: Props) {
         </div>
       )}
     </div>
+  );
+}
+
+function BanderoleStickerGuides() {
+  return (
+    <g transform={`scale(${25.4 / 72}) translate(-0.0078125 0)`}>
+      <defs>
+        <pattern
+          id="banderole-sticker-hatch"
+          width="7"
+          height="7"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <path d="M 0 0 V 7" stroke="#a05b77" strokeOpacity="0.35" strokeWidth="1" />
+        </pattern>
+        <clipPath id="banderole-sticker-left-clip">
+          <rect {...stickerClips.left} />
+        </clipPath>
+        <clipPath id="banderole-sticker-right-clip">
+          <rect {...stickerClips.right} />
+        </clipPath>
+      </defs>
+      {(['left', 'right'] as const).map((side) => (
+        <g key={side} clipPath={`url(#banderole-sticker-${side}-clip)`}>
+          <path d={stickerPaths[side]} fill="#a05b77" fillOpacity="0.07" />
+          <path d={stickerPaths[side]} fill="url(#banderole-sticker-hatch)" />
+          <path d={stickerPaths[side]} fill="none" stroke="#a05b77" strokeWidth="0.8" />
+        </g>
+      ))}
+    </g>
   );
 }
 

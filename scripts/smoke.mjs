@@ -290,8 +290,8 @@ try {
       bottom: Math.max(...lines.map((l) => +l.getAttribute('y2'))),
     };
   });
-  assert.ok(Math.abs(guide.left - 10.001) < 0.00001);
-  assert.ok(Math.abs(guide.top - 9.7915) < 0.00001);
+  assert.ok(Math.abs(guide.left - 10) < 0.00001);
+  assert.ok(Math.abs(guide.top - 10) < 0.00001);
   assert.ok(Math.abs(guide.right - guide.left - 235) < 0.00001);
   assert.ok(Math.abs(guide.bottom - guide.top - 47) < 0.00001);
   await page.getByRole('button', { name: 'Exportieren', exact: true }).click();

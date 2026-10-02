@@ -167,7 +167,7 @@ export function App() {
   const printOptions = {
     cutMarks: includeCutMarks,
     dieLines: includeDieLines,
-    innerGuides: includeInnerGuides,
+    innerGuides: packagingKind !== 'banderole' && includeInnerGuides,
     textMode,
   };
   const packagingLayer = packagingPage.layers.find(
@@ -906,7 +906,7 @@ export function App() {
                   )}{' '}
                   mm
                 </p>
-                {packagingKind === 'banderole' && <p className="hint">Stanzmaß 235 × 47 mm</p>}
+                {packagingKind === 'banderole' && <p className="hint">Endformat 235 × 47 mm</p>}
                 {packagingKind === 'envelope' && (
                   <p className="hint">Gefaltet: DIN C6 · 114 × 162 mm</p>
                 )}
@@ -1353,14 +1353,16 @@ export function App() {
                   />{' '}
                   Stanzkontur
                 </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={includeInnerGuides}
-                    onChange={(e) => setIncludeInnerGuides(e.target.checked)}
-                  />
-                  {packagingKind === 'banderole' ? 'Innere Hilfslinien' : 'Falzlinien'}
-                </label>
+                {packagingKind !== 'banderole' && (
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={includeInnerGuides}
+                      onChange={(e) => setIncludeInnerGuides(e.target.checked)}
+                    />
+                    Falzlinien
+                  </label>
+                )}
                 <label className="textField">
                   Textausgabe
                   <select

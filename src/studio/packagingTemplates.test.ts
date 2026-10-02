@@ -10,7 +10,7 @@ import {
 describe('packaging templates', () => {
   it('uses nominal page dimensions near the source PDFs', () => {
     expect(packagingTypes.map(({ kind, widthMm, heightMm }) => [kind, widthMm, heightMm])).toEqual([
-      ['banderole', 255.002, 66.583],
+      ['banderole', 255, 67],
       ['envelope', 192, 246],
       ['rigid', 266.7, 472.37],
       ['carton', 276, 364],
@@ -35,6 +35,25 @@ describe('packaging templates', () => {
     for (const kind of ['banderole', 'envelope', 'rigid'] as const) {
       expect(makePackagingDocument(kind, 0).pages).toHaveLength(1);
       expect(makePackagingDocument(kind, 0).pages[0].layers.length).toBeGreaterThan(3);
+    }
+  });
+  it('keeps revised banderole examples inside areas clear of folds and stickers', () => {
+    for (const sample of [0, 1, 2]) {
+      const page = makePackagingDocument('banderole', sample).pages[0];
+      for (const layer of page.layers) {
+        const left = layer.xMm - layer.widthMm / 2;
+        const right = layer.xMm + layer.widthMm / 2;
+        const top = layer.yMm - layer.heightMm / 2;
+        const bottom = layer.yMm + layer.heightMm / 2;
+        expect(
+          (left >= 29 && right <= 64) ||
+            (left >= 79 && right <= 176) ||
+            (left >= 191 && right <= 208),
+          layer.name,
+        ).toBe(true);
+        expect(top, layer.name).toBeGreaterThanOrEqual(10);
+        expect(bottom, layer.name).toBeLessThanOrEqual(57);
+      }
     }
   });
   it('uses guides at their native PDF size for every example and page orientation', () => {

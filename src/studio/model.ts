@@ -264,6 +264,9 @@ export function validateProject(input: unknown): Project {
         ...doc,
         pages: doc.pages.map((page) => ({
           ...page,
+          ...(kind === 'banderole'
+            ? { widthMm: banderoleSize.width, heightMm: banderoleSize.height }
+            : {}),
           layers: page.layers.map((layer) =>
             layer.type === 'text' && ['♡', '✿', '✓', '♻'].includes(layer.text ?? '')
               ? { ...layer, type: 'image' as const, dataUrl: symbolData(layer.text!) }
