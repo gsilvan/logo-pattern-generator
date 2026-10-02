@@ -650,15 +650,6 @@ h2 {
   white-space: normal;
   text-align: left;
 }
-.iconChoices {
-  display: flex;
-  gap: 5px;
-  margin-top: 6px;
-}
-.iconChoices button {
-  min-width: 34px;
-  font-size: 17px;
-}
 .textField textarea {
   display: block;
   width: 100%;

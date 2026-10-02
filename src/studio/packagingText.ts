@@ -1,14 +1,18 @@
 import { Textbox } from 'fabric';
 import type { PackagingLayer } from './model';
-import { mappedFont } from './fonts';
-export function textOptions(layer: PackagingLayer, banderole = true) {
+import { fontRenderFamily } from './fonts';
+export function textOptions(layer: PackagingLayer) {
   return {
     width: layer.widthMm,
     text: layer.text ?? '',
-    fontFamily: banderole ? mappedFont(layer.fontFamily) : layer.fontFamily || 'Arial',
+    fontFamily: fontRenderFamily(layer),
     fontSize: (layer.fontSizePt * 25.4) / 72,
-    fontWeight: layer.bold ? 'bold' : 'normal',
-    fontStyle: layer.italic ? ('italic' as const) : ('normal' as const),
+    fontWeight: layer.fontPostscriptName ? 'normal' : layer.bold ? 'bold' : 'normal',
+    fontStyle: layer.fontPostscriptName
+      ? ('normal' as const)
+      : layer.italic
+        ? ('italic' as const)
+        : ('normal' as const),
     fill: layer.color,
     scaleX: 1,
     scaleY: 1,

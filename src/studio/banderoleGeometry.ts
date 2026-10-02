@@ -15,7 +15,8 @@ export const stickerClips = {
   right: { x: 592, y: 31, width: 100, height: 127 },
 } as const;
 export type MarkOptions = { cutMarks: boolean; dieLines: boolean; innerGuides: boolean };
-export type PrintOptions = MarkOptions & { textMode: 'text' | 'paths' };
+export type PrintOptions = MarkOptions;
+export const packagingBleedMm = 3;
 export function pageMarks(page: PackagingPage): MarkOptions {
   return {
     cutMarks: page.cutMarksVisible ?? true,
@@ -23,7 +24,7 @@ export function pageMarks(page: PackagingPage): MarkOptions {
     innerGuides: page.innerGuidesVisible ?? true,
   };
 }
-export function bleedRect(bleed = 3) {
+export function bleedRect(bleed = packagingBleedMm) {
   if (!Number.isFinite(bleed) || bleed < 0 || bleed > 5)
     throw new Error('Beschnitt muss zwischen 0 und 5 mm liegen.');
   return {
@@ -35,7 +36,7 @@ export function bleedRect(bleed = 3) {
 }
 export type MarkLine = { x1: number; y1: number; x2: number; y2: number; kind: keyof MarkOptions };
 export function markLines(
-  bleed = 3,
+  bleed = packagingBleedMm,
   options: MarkOptions = { cutMarks: true, dieLines: true, innerGuides: true },
 ): MarkLine[] {
   bleedRect(bleed);
@@ -71,7 +72,7 @@ export function marksSvg(bleed: number, options: MarkOptions) {
     )
     .join('');
 }
-export function backgroundPlacement(width: number, height: number, bleed = 3) {
+export function backgroundPlacement(width: number, height: number, bleed = packagingBleedMm) {
   const area = bleedRect(bleed),
     scale = Math.max(area.width / width, area.height / height);
   return {

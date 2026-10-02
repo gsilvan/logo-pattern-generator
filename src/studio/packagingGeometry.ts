@@ -9,6 +9,7 @@ import {
   banderoleSize,
   bleedRect,
   markLines,
+  packagingBleedMm,
   pageMarks,
   trim,
   type MarkLine,
@@ -118,16 +119,16 @@ export function printGeometry(doc: PackagingDocument, page = doc.pages[doc.selec
     return {
       media: { x: 0, y: 0, ...banderoleSize },
       trim,
-      bleed: bleedRect(page.bleedMm ?? 3),
-      marks: markLines(page.bleedMm ?? 3, pageMarks(page)),
+      bleed: bleedRect(packagingBleedMm),
+      marks: markLines(packagingBleedMm, pageMarks(page)),
       die: null,
     };
   const source = sources[dieId(doc, page)];
   if (!source) throw new Error('Stanzgeometrie fehlt.');
   const { cut, scaleX, scaleY } = correctedCut(source),
-    bleed = rectWithMargin(cut, page.bleedMm ?? 3),
-    marks = trimMarks(cut, page.bleedMm ?? 3),
-    margin = 5 + (page.bleedMm ?? 3);
+    bleed = rectWithMargin(cut, packagingBleedMm),
+    marks = trimMarks(cut, packagingBleedMm),
+    margin = 5 + packagingBleedMm;
   const x = Math.min(0, cut.x - margin),
     y = Math.min(0, cut.y - margin),
     right = Math.max(page.widthMm, cut.x + cut.width + margin),

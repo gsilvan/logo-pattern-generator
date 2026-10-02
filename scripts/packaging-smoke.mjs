@@ -251,7 +251,7 @@ try {
           for (const layer of page.layers) {
             if (type.kind === 'banderole') await loadFont(layer);
             const text = new Textbox(layer.text, {
-              ...textOptions(layer, type.kind === 'banderole'),
+              ...textOptions(layer),
             });
             if (text.height > layer.heightMm + 0.5)
               problems.push(
@@ -348,15 +348,7 @@ try {
           const content = await page.getTextContent();
           result.push({
             image: canvas.toDataURL('image/png').split(',')[1],
-            texts: content.items
-              .filter((item) => item.str?.trim())
-              .map((item) => ({
-                text: item.str,
-                x: item.transform[4],
-                y: viewport.height - item.transform[5],
-                width: item.width,
-                rotation: (Math.atan2(-item.transform[1], item.transform[0]) * 180) / Math.PI,
-              })),
+            texts: content.items.filter((item) => item.str?.trim()),
             width: viewport.width,
             height: viewport.height,
           });
@@ -371,27 +363,7 @@ try {
         `${output}/${type.kind}-export-${i}.png`,
         Buffer.from(renderedPage.image, 'base64'),
       );
-      for (const text of renderedPage.texts) {
-        assert.ok(
-          text.x >= 0 &&
-            text.x <= renderedPage.width &&
-            text.y >= 0 &&
-            text.y <= renderedPage.height,
-          `Exported text outside page: ${text.text}`,
-        );
-      }
-      for (const layer of doc.pages[i].layers.filter((layer) => layer.rotation === 180)) {
-        const firstLine = layer.text.split('\n')[0];
-        const found = renderedPage.texts.find((item) => firstLine.startsWith(item.text));
-        assert.ok(
-          found && Math.abs(Math.abs(found.rotation) - 180) < 0.1,
-          `Missing rotated PDF text: ${firstLine}`,
-        );
-        assert.ok(
-          Math.abs((found.x * 25.4) / 72 - (layer.xMm + layer.widthMm / 2)) < 0.2,
-          'PDF must rotate around the same text center as the editor',
-        );
-      }
+      assert.equal(renderedPage.texts.length, 0, 'PDF text must be converted to paths');
     }
     await page.getByRole('button', { name: 'Schließen', exact: true }).click();
   }
@@ -402,12 +374,9 @@ try {
       const doc = (await state()).project.packagingDocuments[kind];
       return doc.pages[doc.selectedPage];
     };
-    await page.getByRole('combobox', { name: 'Beschnitt (mm)' }).selectOption('5');
-    assert.equal((await activePage()).bleedMm, 5);
-    await page.getByRole('button', { name: 'Rückgängig', exact: true }).click();
-    assert.equal((await activePage()).bleedMm ?? 3, 3);
-    await page.getByRole('button', { name: 'Wiederholen', exact: true }).click();
-    assert.equal((await activePage()).bleedMm, 5);
+    assert.equal((await activePage()).bleedMm, 3);
+    assert.ok(await page.getByText('Beschnitt: 3 mm').isVisible());
+    assert.equal(await page.getByRole('combobox', { name: 'Beschnitt (mm)' }).count(), 0);
     await page.locator('.viewMenu summary').click();
     for (const [name, key] of [
       ['Schnittmarken', 'cutMarksVisible'],

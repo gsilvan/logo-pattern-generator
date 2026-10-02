@@ -1,4 +1,4 @@
-import { banderoleSize } from './banderoleGeometry';
+import { banderoleSize, packagingBleedMm } from './banderoleGeometry';
 import type { PackagingDocument, PackagingKind, PackagingLayer, PackagingPage } from './model';
 
 export const packagingTypes: {
@@ -475,6 +475,7 @@ export function makePackagingDocument(kind: PackagingKind, sample = -1): Packagi
       widthMm: kind === 'envelope' && sample > 0 ? 246 : size.widthMm,
       heightMm: kind === 'envelope' && sample > 0 ? 192 : size.heightMm,
       background: '#ffffff',
+      bleedMm: packagingBleedMm,
       layers:
         sample < 0
           ? []

@@ -1,9 +1,16 @@
 import DOMPurify from 'dompurify';
 import { config } from 'fabric';
 import type { PackagingDocument, PackagingLayer } from './model';
-import { markColor, markWidth, marksSvg, pageMarks, type PrintOptions } from './banderoleGeometry';
+import {
+  markColor,
+  markWidth,
+  marksSvg,
+  pageMarks,
+  packagingBleedMm,
+  type PrintOptions,
+} from './banderoleGeometry';
 import { dieMarkup, printGeometry, type MmRect } from './packagingGeometry';
-import { loadFont, type LoadedFont } from './fonts';
+import { loadFont } from './fonts';
 import { textView } from './packagingText';
 const ns = 'http://www.w3.org/2000/svg';
 const ink = 'http://www.inkscape.org/namespaces/inkscape';
@@ -90,15 +97,13 @@ function vectorImage(layer: PackagingLayer, index: number) {
 
 export async function packagingSvg(
   doc: PackagingDocument,
-  options: PrintOptions = { ...pageMarks(doc.pages[doc.selectedPage]), textMode: 'text' },
-  embedFonts = true,
+  options: PrintOptions = pageMarks(doc.pages[doc.selectedPage]),
   pageIndex = doc.selectedPage,
 ) {
   const page = doc.pages[pageIndex],
     geometry = printGeometry(doc, page),
     area = geometry.bleed,
     { media } = geometry;
-  const fonts = new Map<string, LoadedFont>();
   const background: string[] = [],
     artwork: string[] = [];
   config.NUM_FRACTION_DIGITS = 8;
@@ -113,35 +118,34 @@ export async function packagingSvg(
         )
       )
         throw new Error(
-          `Ebene „${layer.name}“: Schrift enthält ein Zeichen nicht. Bitte ein Vektorsymbol verwenden.`,
+          `Ebene „${layer.name}“: Schrift enthält ein Zeichen nicht. Bitte eine andere Schrift wählen.`,
         );
-      fonts.set(loaded.family + loaded.style, loaded);
       const object = textView(layer);
       const parsed = parse(`<svg xmlns="${ns}">${object.toSVG()}</svg>`);
-      if (options.textMode === 'paths') {
-        for (const text of parsed.querySelectorAll('text')) {
-          const group = parsed.createElementNS(ns, 'g');
-          group.setAttribute('fill', layer.color);
-          for (const span of text.querySelectorAll('tspan')) {
-            const value = span.textContent ?? '';
-            if ([...value].some((char) => !loaded.font.charToGlyphIndex(char)))
-              throw new Error(`Ebene „${layer.name}“: Schrift enthält ein Zeichen nicht.`);
-            const path = parsed.createElementNS(ns, 'path');
-            path.setAttribute(
-              'd',
-              loaded.font
-                .getPath(
-                  value,
-                  Number(span.getAttribute('x')),
-                  Number(span.getAttribute('y')),
-                  object.fontSize,
-                )
-                .toPathData(8),
+      for (const text of parsed.querySelectorAll('text')) {
+        const group = parsed.createElementNS(ns, 'g');
+        group.setAttribute('fill', layer.color);
+        for (const span of text.querySelectorAll('tspan')) {
+          const value = span.textContent ?? '';
+          if ([...value].some((char) => !loaded.font.charToGlyphIndex(char)))
+            throw new Error(`Ebene „${layer.name}“: Schrift enthält ein Zeichen nicht.`);
+          const pathData = loaded.font
+            .getPath(
+              value,
+              Number(span.getAttribute('x')),
+              Number(span.getAttribute('y')),
+              object.fontSize,
+            )
+            .toPathData(8);
+          if ((!pathData && value.trim()) || /(?:NaN|Infinity)/.test(pathData))
+            throw new Error(
+              `Ebene „${layer.name}“: Schrift kann nicht als Pfad ausgegeben werden.`,
             );
-            group.append(path);
-          }
-          text.replaceWith(group);
+          const path = parsed.createElementNS(ns, 'path');
+          path.setAttribute('d', pathData);
+          group.append(path);
         }
+        text.replaceWith(group);
       }
       content = [...parsed.documentElement.childNodes].map(serialize).join('');
       object.dispose();
@@ -159,24 +163,14 @@ export async function packagingSvg(
     const markup = `<g id="layer-${index}" inkscape:label="${escapeXml(layer.name)}"${layer.role === 'background' ? '' : ' inkscape:groupmode="layer"'}><title>${escapeXml(layer.name)}</title>${content}</g>`;
     (layer.role === 'background' ? background : artwork).push(markup);
   }
-  const styles =
-    embedFonts && options.textMode === 'text'
-      ? [...fonts.values()]
-          .map(
-            (font) =>
-              `@font-face{font-family:'${font.family}';font-weight:${font.style.includes('bold') ? 700 : 400};font-style:${font.style.includes('italic') ? 'italic' : 'normal'};src:url(data:font/ttf;base64,${font.base64}) format('truetype');}`,
-          )
-          .join('')
-      : '';
   const rect = `x="${area.x}" y="${area.y}" width="${area.width}" height="${area.height}"`;
   const offsetX = -media.x,
     offsetY = -media.y;
   const marks = geometry.die
     ? `${options.cutMarks ? geometry.marks.map((line) => `<line x1="${line.x1}" y1="${line.y1}" x2="${line.x2}" y2="${line.y2}" stroke="${markColor(line.kind)}" stroke-width="${markWidth(line.kind)}"/>`).join('') : ''}${options.dieLines ? `<g inkscape:label="Stanzkontur">${dieMarkup(geometry.die, 'cut')}</g>` : ''}${options.innerGuides ? `<g inkscape:label="Falzlinien">${dieMarkup(geometry.die, 'fold')}</g>` : ''}`
-    : marksSvg(page.bleedMm ?? 3, options);
+    : marksSvg(packagingBleedMm, options);
   return {
-    svg: `<svg xmlns="${ns}" xmlns:inkscape="${ink}" width="${media.width}mm" height="${media.height}mm" viewBox="0 0 ${media.width} ${media.height}"><defs><clipPath id="bleed"><rect ${rect}/></clipPath><style>${styles}</style></defs><g id="background" inkscape:groupmode="layer" inkscape:label="Hintergrund" transform="translate(${offsetX} ${offsetY})" clip-path="url(#bleed)"><rect ${rect} fill="${escapeXml(page.background)}"/>${background.join('')}</g><g id="artwork" inkscape:groupmode="layer" inkscape:label="Gestaltung" transform="translate(${offsetX} ${offsetY})" clip-path="url(#bleed)">${artwork.join('')}</g><g id="marks" inkscape:groupmode="layer" inkscape:label="Markierungen" transform="translate(${offsetX} ${offsetY})">${marks}</g></svg>`,
-    fonts: [...fonts.values()],
+    svg: `<svg xmlns="${ns}" xmlns:inkscape="${ink}" width="${media.width}mm" height="${media.height}mm" viewBox="0 0 ${media.width} ${media.height}"><defs><clipPath id="bleed"><rect ${rect}/></clipPath></defs><g id="background" inkscape:groupmode="layer" inkscape:label="Hintergrund" transform="translate(${offsetX} ${offsetY})" clip-path="url(#bleed)"><rect ${rect} fill="${escapeXml(page.background)}"/>${background.join('')}</g><g id="artwork" inkscape:groupmode="layer" inkscape:label="Gestaltung" transform="translate(${offsetX} ${offsetY})" clip-path="url(#bleed)">${artwork.join('')}</g><g id="marks" inkscape:groupmode="layer" inkscape:label="Markierungen" transform="translate(${offsetX} ${offsetY})">${marks}</g></svg>`,
   };
 }
 
@@ -186,7 +180,7 @@ export async function packagingPdf(doc: PackagingDocument, options: PrintOptions
   const [{ jsPDF }] = await Promise.all([import('jspdf'), import('svg2pdf.js')]);
   const pages = await Promise.all(
     doc.pages.map(async (page, index) => ({
-      ...(await packagingSvg(doc, options, false, index)),
+      ...(await packagingSvg(doc, options, index)),
       geometry: printGeometry(doc, page),
     })),
   );
@@ -197,14 +191,6 @@ export async function packagingPdf(doc: PackagingDocument, options: PrintOptions
     orientation: first.width > first.height ? 'landscape' : 'portrait',
     compress: true,
   });
-  if (options.textMode === 'text')
-    for (const font of new Map(
-      pages.flatMap((page) => page.fonts.map((font) => [font.family + font.style, font] as const)),
-    ).values()) {
-      const name = font.family.replaceAll(' ', '') + font.style + '.ttf';
-      pdf.addFileToVFS(name, font.base64);
-      pdf.addFont(name, font.family, font.style);
-    }
   for (const [index, page] of pages.entries()) {
     const { media, trim, bleed } = page.geometry;
     if (index)

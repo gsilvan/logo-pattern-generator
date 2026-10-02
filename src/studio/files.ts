@@ -115,12 +115,10 @@ export async function exportPackagingPdf(
     cutMarks: boolean;
     dieLines: boolean;
     innerGuides?: boolean;
-    textMode?: 'text' | 'paths';
   },
 ) {
   const pdf = await packagingPdf(document, {
     ...pageMarks(document.pages[document.selectedPage]),
-    textMode: 'text',
     ...options,
   });
   const name = document.templateId.replace(/[^a-z0-9-]+/gi, '_');

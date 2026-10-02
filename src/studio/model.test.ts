@@ -69,7 +69,7 @@ describe('physical geometry and repeat cycles', () => {
     expect([loaded.widthMm, loaded.heightMm]).toEqual([255, 67]);
     expect(loaded.layers[0]).toEqual(page.layers[0]);
   });
-  it('preserves positions, backgrounds and marks while mapping old fonts on every die', () => {
+  it('normalizes bleed while preserving positions, backgrounds and marks on every die', () => {
     for (const kind of ['envelope', 'rigid', 'carton'] as const) {
       const doc = makePackagingDocument(kind, 0);
       const page = doc.pages[0];
@@ -103,7 +103,7 @@ describe('physical geometry and repeat cycles', () => {
         },
       });
       const restored = imported.packagingDocuments?.[kind]?.pages[0];
-      expect(restored?.bleedMm).toBe(5);
+      expect(restored?.bleedMm).toBe(3);
       expect(restored?.cutMarksVisible).toBe(false);
       expect(restored?.dieLinesVisible).toBe(true);
       expect(restored?.innerGuidesVisible).toBe(false);
@@ -116,5 +116,24 @@ describe('physical geometry and repeat cycles', () => {
       });
       expect(restored?.layers[1]).toMatchObject({ role: 'background', locked: true });
     }
+  });
+  it('preserves an unavailable local font reference and an existing icon', () => {
+    const doc = makePackagingDocument('banderole', 0);
+    doc.pages[0].layers[0].fontFamily = 'Kundenschrift';
+    doc.pages[0].layers[0].fontPostscriptName = 'Kundenschrift-Regular';
+    const originalIcon = {
+      ...doc.pages[0].layers[0],
+      id: 'saved-icon',
+      type: 'image' as const,
+      dataUrl: 'data:image/svg+xml,%3Csvg%2F%3E',
+    };
+    doc.pages[0].layers.push(originalIcon);
+    const loaded = validateProject({
+      ...initialProject,
+      packagingDocuments: { banderole: doc },
+    }).packagingDocuments!.banderole!.pages[0];
+    expect(loaded.layers[0].fontFamily).toBe('Kundenschrift');
+    expect(loaded.layers[0].fontPostscriptName).toBe('Kundenschrift-Regular');
+    expect(loaded.layers.at(-1)).toEqual(originalIcon);
   });
 });

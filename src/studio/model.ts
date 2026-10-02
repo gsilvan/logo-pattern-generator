@@ -1,4 +1,4 @@
-import { banderoleSize } from './banderoleGeometry';
+import { banderoleSize, packagingBleedMm } from './banderoleGeometry';
 import { symbolData } from './symbols';
 import { mappedFont } from './fonts';
 export const PPI = 300;
@@ -51,6 +51,7 @@ export type PackagingLayer = {
   heightMm: number;
   rotation: number;
   fontFamily: string;
+  fontPostscriptName?: string;
   fontSizePt: number;
   color: string;
   bold: boolean;
@@ -163,6 +164,10 @@ export function validateProject(input: unknown): Project {
                   (layer.role !== 'background' || layer.type !== 'image')) ||
                 (layer.type === 'text' &&
                   (!Number.isFinite(layer.fontSizePt) || layer.fontSizePt <= 0)) ||
+                (layer.fontPostscriptName !== undefined &&
+                  (typeof layer.fontPostscriptName !== 'string' ||
+                    !layer.fontPostscriptName ||
+                    layer.fontPostscriptName.length > 128)) ||
                 !['text', 'image'].includes(layer.type) ||
                 (layer.type === 'image' && typeof layer.dataUrl !== 'string') ||
                 (layer.type === 'text' && typeof layer.text !== 'string'),
@@ -184,6 +189,7 @@ export function validateProject(input: unknown): Project {
           widthMm: banderoleSize.width,
           heightMm: banderoleSize.height,
           background: '#ffffff',
+          bleedMm: packagingBleedMm,
           layers: [
             ...(p.packaging.logoAssetId
               ? [
@@ -264,13 +270,16 @@ export function validateProject(input: unknown): Project {
         ...doc,
         pages: doc.pages.map((page) => ({
           ...page,
+          bleedMm: packagingBleedMm,
           ...(kind === 'banderole'
             ? { widthMm: banderoleSize.width, heightMm: banderoleSize.height }
             : {}),
           layers: page.layers.map((layer) =>
             layer.type === 'text' && ['♡', '✿', '✓', '♻'].includes(layer.text ?? '')
               ? { ...layer, type: 'image' as const, dataUrl: symbolData(layer.text!) }
-              : layer.type === 'text' && mappedFont(layer.fontFamily) !== layer.fontFamily
+              : layer.type === 'text' &&
+                  !layer.fontPostscriptName &&
+                  mappedFont(layer.fontFamily) !== layer.fontFamily
                 ? {
                     ...layer,
                     replacedFont: layer.fontFamily,

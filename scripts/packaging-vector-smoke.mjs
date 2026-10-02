@@ -23,20 +23,16 @@ try {
     const { printGeometry } = await import('/src/studio/packagingGeometry.ts');
     const { addPackagingText } = await import('/src/studio/PackagingCanvas.tsx');
     const { symbolData } = await import('/src/studio/symbols.ts');
-    const options = { cutMarks: true, dieLines: true, innerGuides: true, textMode: 'text' };
+    const options = { cutMarks: true, dieLines: true, innerGuides: true };
     const answer = [];
     for (const kind of ['envelope', 'rigid', 'carton']) {
       const doc = makePackagingDocument(kind, 0);
       const svg = await packagingSvg(doc, options);
-      const paths = await packagingSvg(doc, { ...options, textMode: 'paths' });
       const pdf = await packagingPdf(doc, options);
-      const pathsPdf = await packagingPdf(doc, { ...options, textMode: 'paths' });
       answer.push({
         kind,
         svg: svg.svg,
-        paths: paths.svg,
         pdf: pdf.output('datauristring').split(',')[1],
-        pathsPdf: pathsPdf.output('datauristring').split(',')[1],
         boxes: doc.pages.map((item) => printGeometry(doc, item)),
       });
     }
@@ -104,8 +100,7 @@ try {
         for (let index = 0; index < doc.pages.length; index++) {
           const { svg } = await packagingSvg(
             doc,
-            { cutMarks: false, dieLines: true, innerGuides: true, textMode: 'paths' },
-            false,
+            { cutMarks: false, dieLines: true, innerGuides: true },
             index,
           );
           const root = new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
@@ -127,41 +122,6 @@ try {
     return findings;
   });
   assert.deepEqual(collisions, [], 'Example text must clear the cut and fold paths');
-  const textPathDifferences = await page.evaluate(
-    async (items) => {
-      const pixels = async (source) => {
-        const root = new DOMParser().parseFromString(source, 'image/svg+xml').documentElement;
-        const image = new Image();
-        const url = URL.createObjectURL(new Blob([source], { type: 'image/svg+xml' }));
-        try {
-          image.src = url;
-          await image.decode();
-          const canvas = document.createElement('canvas');
-          canvas.width = Math.ceil(parseFloat(root.getAttribute('width')) * 3);
-          canvas.height = Math.ceil(parseFloat(root.getAttribute('height')) * 3);
-          const context = canvas.getContext('2d');
-          context.fillStyle = 'white';
-          context.fillRect(0, 0, canvas.width, canvas.height);
-          context.drawImage(image, 0, 0, canvas.width, canvas.height);
-          return context.getImageData(0, 0, canvas.width, canvas.height).data;
-        } finally {
-          URL.revokeObjectURL(url);
-        }
-      };
-      const differences = [];
-      for (const item of items) {
-        const text = await pixels(item.svg);
-        const paths = await pixels(item.paths);
-        let sum = 0;
-        for (let i = 0; i < text.length; i++) sum += Math.abs(text[i] - paths[i]);
-        differences.push({ kind: item.kind, difference: sum / text.length });
-      }
-      return differences;
-    },
-    results.filter((item) => item.kind !== 'mixed'),
-  );
-  for (const { kind, difference } of textPathDifferences)
-    assert.ok(difference < 1.5, `${kind}: text and path positions differ by ${difference}`);
   for (const result of results) {
     const { kind, svg, pdf, boxes } = result;
     const pdfBytes = Buffer.from(pdf, 'base64');
@@ -208,16 +168,10 @@ try {
       });
     }
     if (kind !== 'mixed') {
-      assert.ok(svg.includes('<text'));
+      assert.ok(!svg.includes('<text'));
       assert.ok(!svg.includes('<image'));
       assert.equal((xml.match(/\/Subtype\s*\/Image/g) || []).length, 0);
-      assert.ok(xml.includes('/FontFile2'));
-      assert.ok(result.paths.includes('<path'));
-      assert.ok(!result.paths.includes('<text'));
-      await writeFile(`${output}/${kind}-paths.svg`, result.paths);
-      const pathPdf = Buffer.from(result.pathsPdf, 'base64');
-      await writeFile(`${output}/${kind}-paths.pdf`, pathPdf);
-      assert.equal((pathPdf.toString('latin1').match(/\/Subtype\s*\/Image/g) || []).length, 0);
+      assert.ok(!xml.includes('/FontFile2'));
     } else {
       assert.equal((svg.match(/<image\b/g) || []).length, 1);
       assert.ok((xml.match(/\/Subtype\s*\/Image/g) || []).length >= 1);

@@ -1,7 +1,14 @@
-import { pageMarks } from './banderoleGeometry';
+import { pageMarks, packagingBleedMm } from './banderoleGeometry';
 import { printGeometry } from './packagingGeometry';
-import { fontFamilies } from './fonts';
-import { symbolData } from './symbols';
+import {
+  fontFamilies,
+  loadFont,
+  localFontAvailable,
+  localFontSupported,
+  localStyle,
+  requestLocalFonts,
+  type LocalFont,
+} from './fonts';
 import { PackagingPreview } from './BanderolePreview';
 import { useEffect, useState, useRef, type ChangeEvent } from 'react';
 import { Workspace } from './Workspace';
@@ -156,23 +163,30 @@ export function App() {
   const [includeCutMarks, setIncludeCutMarks] = useState(true);
   const [includeDieLines, setIncludeDieLines] = useState(true);
   const [includeInnerGuides, setIncludeInnerGuides] = useState(true);
-  const [textMode, setTextMode] = useState<'text' | 'paths'>('text');
   const [packagingExportPages, setPackagingExportPages] = useState(0);
   const [packagingSvgPage, setPackagingSvgPage] = useState(0);
+  const [localFonts, setLocalFonts] = useState<LocalFont[]>([]);
+  const [fontRevision, setFontRevision] = useState(0);
+  const [fontBusy, setFontBusy] = useState(false);
+  const [fontError, setFontError] = useState('');
   const packagingDocument =
     project.packagingDocuments?.[packagingKind] ?? makePackagingDocument(packagingKind);
   const packagingPage = packagingDocument.pages[packagingDocument.selectedPage];
-  const bleedMm = packagingPage.bleedMm ?? 3;
   const backgroundLayer = packagingPage.layers.find((layer) => layer.role === 'background');
   const printOptions = {
     cutMarks: includeCutMarks,
     dieLines: includeDieLines,
     innerGuides: packagingKind !== 'banderole' && includeInnerGuides,
-    textMode,
   };
   const packagingLayer = packagingPage.layers.find(
     (layer) => packagingSelection.length === 1 && layer.id === packagingSelection[0],
   );
+  const localFaces = localFonts.filter((font) => font.family === packagingLayer?.fontFamily);
+  const matchingLocalFace = (bold: boolean, italic: boolean) =>
+    localFaces.find((face) => {
+      const style = localStyle(face.style);
+      return style.bold === bold && style.italic === italic;
+    });
   const activeExport = useRef<AbortController | null>(null);
   const selected = project.motifs.find((m) => m.id === selectedId);
   useEffect(() => {
@@ -181,6 +195,9 @@ export function App() {
     window.addEventListener('beforeunload', flush);
     return () => window.removeEventListener('beforeunload', flush);
   }, []);
+  useEffect(() => {
+    setFontError('');
+  }, [packagingSelection]);
   useEffect(() => {
     const closeMenus = (event: PointerEvent) => {
       for (const menu of document.querySelectorAll<HTMLDetailsElement>(
@@ -394,6 +411,49 @@ export function App() {
     if (preview) state.previewTransform(apply(state.draft ?? state.project));
     else state.update(apply);
   }
+  async function chooseLocalFace(layer: PackagingLayer, face: LocalFont) {
+    setFontBusy(true);
+    setFontError('');
+    try {
+      const style = localStyle(face.style);
+      const next = {
+        ...layer,
+        fontFamily: face.family,
+        fontPostscriptName: face.postscriptName,
+        ...style,
+        replacedFont: undefined,
+      };
+      const loaded = await loadFont(next);
+      if (
+        [...(layer.text ?? '')].some(
+          (char) => !/\s/.test(char) && !loaded.font.charToGlyphIndex(char),
+        )
+      )
+        throw new Error(`Schrift „${face.fullName}“ enthält nicht alle Zeichen des Textes.`);
+      updatePackagingLayer(layer.id, () => next);
+      setFontRevision((revision) => revision + 1);
+    } catch (error) {
+      setFontError(error instanceof Error ? error.message : 'Schrift konnte nicht geladen werden.');
+    } finally {
+      setFontBusy(false);
+    }
+  }
+  async function allowLocalFonts() {
+    setFontBusy(true);
+    setFontError('');
+    try {
+      const fonts = await requestLocalFonts();
+      setLocalFonts(fonts);
+      setFontRevision((revision) => revision + 1);
+      if (!fonts.length) setFontError('Keine lokalen Schriften gefunden.');
+    } catch (error) {
+      setFontError(
+        error instanceof Error ? error.message : 'Schriften konnten nicht geladen werden.',
+      );
+    } finally {
+      setFontBusy(false);
+    }
+  }
   function updatePackagingPage(changes: Partial<PackagingPage>) {
     updatePackagingDocument({
       ...packagingDocument,
@@ -571,6 +631,7 @@ export function App() {
               <PackagingWorkspace
                 key={`${packagingKind}-${packagingDocument.selectedPage}`}
                 document={packagingDocument}
+                fontRevision={fontRevision}
                 selectedIds={packagingSelection}
                 onSelection={setPackagingSelection}
                 onUpdatePage={updatePackagingPage}
@@ -910,45 +971,10 @@ export function App() {
                 {packagingKind === 'envelope' && (
                   <p className="hint">Gefaltet: DIN C6 · 114 × 162 mm</p>
                 )}
-                <label className="textField">
-                  Beschnitt (mm)
-                  <select
-                    aria-label="Beschnitt (mm)"
-                    value={bleedMm}
-                    onChange={(e) => updatePackagingPage({ bleedMm: Number(e.target.value) })}
-                  >
-                    {[0, 1, 2, 3, 4, 5].map((n) => (
-                      <option key={n} value={n}>
-                        {n} mm
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <p className="hint">Beschnitt: {packagingBleedMm} mm</p>
                 <button onClick={() => addPackagingLayer(addPackagingText(packagingDocument))}>
                   + Text hinzufügen
                 </button>
-                <div className="iconChoices" aria-label="Textsymbol hinzufügen">
-                  {['♡', '✿', '✓', '♻'].map((symbol) => (
-                    <button
-                      key={symbol}
-                      aria-label={`Symbol ${symbol} hinzufügen`}
-                      onClick={() =>
-                        addPackagingLayer({
-                          ...addPackagingText(packagingDocument),
-                          name: `Symbol ${symbol}`,
-                          text: symbol,
-                          type: 'image' as const,
-                          dataUrl: symbolData(symbol),
-                          fontSizePt: 28,
-                          widthMm: 18,
-                          heightMm: 18,
-                        })
-                      }
-                    >
-                      {symbol}
-                    </button>
-                  ))}
-                </div>
                 <label className="uploadButton">
                   + Bild oder Logo hochladen
                   <input
@@ -1151,19 +1177,88 @@ export function App() {
                   <label className="textField">
                     Schrift
                     <select
-                      value={packagingLayer.fontFamily}
-                      onChange={(e) =>
-                        updatePackagingLayer(packagingLayer.id, (layer) => ({
-                          ...layer,
-                          fontFamily: e.target.value,
-                        }))
-                      }
+                      value={`${packagingLayer.fontPostscriptName ? 'local' : 'bundle'}:${packagingLayer.fontFamily}`}
+                      disabled={fontBusy}
+                      onChange={(e) => {
+                        const [source, family] = e.target.value.split(/:(.*)/s);
+                        if (source === 'bundle') {
+                          setFontError('');
+                          updatePackagingLayer(packagingLayer.id, (layer) => ({
+                            ...layer,
+                            fontFamily: family,
+                            fontPostscriptName: undefined,
+                            replacedFont: undefined,
+                          }));
+                        } else {
+                          const faces = localFonts.filter((font) => font.family === family);
+                          const face =
+                            faces.find((font) => {
+                              const style = localStyle(font.style);
+                              return !style.bold && !style.italic;
+                            }) ?? faces[0];
+                          if (face) void chooseLocalFace(packagingLayer, face);
+                        }
+                      }}
                     >
-                      {fontFamilies.map((font) => (
-                        <option key={font}>{font}</option>
-                      ))}
+                      <optgroup label="Mitgelieferte Schriften">
+                        {fontFamilies.map((font) => (
+                          <option key={font} value={`bundle:${font}`}>
+                            {font}
+                          </option>
+                        ))}
+                      </optgroup>
+                      {localFonts.length > 0 && (
+                        <optgroup label="Lokale Schriften">
+                          {[...new Set(localFonts.map((font) => font.family))].map((font) => (
+                            <option key={font} value={`local:${font}`}>
+                              {font}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {packagingLayer.fontPostscriptName && !localFaces.length && (
+                        <option value={`local:${packagingLayer.fontFamily}`}>
+                          {packagingLayer.fontFamily} · Freigabe nötig
+                        </option>
+                      )}
                     </select>
                   </label>
+                  {packagingLayer.fontPostscriptName && localFaces.length > 0 && (
+                    <label className="textField">
+                      Schnitt
+                      <select
+                        value={packagingLayer.fontPostscriptName}
+                        disabled={fontBusy}
+                        onChange={(e) => {
+                          const face = localFaces.find(
+                            (font) => font.postscriptName === e.target.value,
+                          );
+                          if (face) void chooseLocalFace(packagingLayer, face);
+                        }}
+                      >
+                        {localFaces.map((face) => (
+                          <option key={face.postscriptName} value={face.postscriptName}>
+                            {face.style || face.fullName}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  {localFontSupported() ? (
+                    <button disabled={fontBusy} onClick={() => void allowLocalFonts()}>
+                      Lokale Schriften freigeben
+                    </button>
+                  ) : (
+                    <p className="hint">Lokale Schriften sind in diesem Browser nicht verfügbar.</p>
+                  )}
+                  {packagingLayer.fontPostscriptName &&
+                    !localFontAvailable(packagingLayer.fontPostscriptName) && (
+                      <p className="hint" role="status">
+                        Diese Schrift ist noch nicht freigegeben. Vor dem Export freigeben oder
+                        ersetzen.
+                      </p>
+                    )}
+                  {fontError && <p role="alert">{fontError}</p>}
                   <div className="fieldGrid">
                     {editNumber(
                       'Schriftgröße',
@@ -1208,23 +1303,41 @@ export function App() {
                   </label>
                   <button
                     aria-pressed={packagingLayer.bold}
-                    onClick={() =>
-                      updatePackagingLayer(packagingLayer.id, (layer) => ({
-                        ...layer,
-                        bold: !layer.bold,
-                      }))
+                    disabled={
+                      fontBusy ||
+                      (Boolean(packagingLayer.fontPostscriptName) &&
+                        !matchingLocalFace(!packagingLayer.bold, packagingLayer.italic))
                     }
+                    onClick={() => {
+                      if (packagingLayer.fontPostscriptName) {
+                        const face = matchingLocalFace(!packagingLayer.bold, packagingLayer.italic);
+                        if (face) void chooseLocalFace(packagingLayer, face);
+                      } else
+                        updatePackagingLayer(packagingLayer.id, (layer) => ({
+                          ...layer,
+                          bold: !layer.bold,
+                        }));
+                    }}
                   >
                     Fett
                   </button>
                   <button
                     aria-pressed={packagingLayer.italic}
-                    onClick={() =>
-                      updatePackagingLayer(packagingLayer.id, (layer) => ({
-                        ...layer,
-                        italic: !layer.italic,
-                      }))
+                    disabled={
+                      fontBusy ||
+                      (Boolean(packagingLayer.fontPostscriptName) &&
+                        !matchingLocalFace(packagingLayer.bold, !packagingLayer.italic))
                     }
+                    onClick={() => {
+                      if (packagingLayer.fontPostscriptName) {
+                        const face = matchingLocalFace(packagingLayer.bold, !packagingLayer.italic);
+                        if (face) void chooseLocalFace(packagingLayer, face);
+                      } else
+                        updatePackagingLayer(packagingLayer.id, (layer) => ({
+                          ...layer,
+                          italic: !layer.italic,
+                        }));
+                    }}
                   >
                     Kursiv
                   </button>
@@ -1363,18 +1476,8 @@ export function App() {
                     Falzlinien
                   </label>
                 )}
-                <label className="textField">
-                  Textausgabe
-                  <select
-                    value={textMode}
-                    onChange={(e) => setTextMode(e.target.value as 'text' | 'paths')}
-                  >
-                    <option value="text">Bearbeitbarer Text</option>
-                    <option value="paths">Text als Pfade</option>
-                  </select>
-                </label>
                 <p className="hint">
-                  Beschnitt {bleedMm} mm ·{' '}
+                  Beschnitt {packagingBleedMm} mm ·{' '}
                   {packagingKind === 'banderole'
                     ? 'Endformat 235 × 47 mm'
                     : packagingKind === 'envelope'
@@ -1439,7 +1542,6 @@ export function App() {
                         cutMarks: includeCutMarks,
                         dieLines: includeDieLines,
                         innerGuides: includeInnerGuides,
-                        textMode,
                       });
                     })
                   }

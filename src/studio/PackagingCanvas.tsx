@@ -12,6 +12,7 @@ import { useWorkspaceView, ViewToolbar } from './WorkspaceView';
 type TaggedObject = FabricObject & { packageLayerId?: string };
 type SelectionProps = {
   document: PackagingDocument;
+  fontRevision: number;
   selectedIds: string[];
   onSelection: (ids: string[]) => void;
 };
@@ -426,8 +427,16 @@ export function PackagingCanvas(props: Props) {
     void (async () => {
       // Complete image loading before touching the active selection.
       const loaded = new Map<string, FabricObject>();
-      await Promise.all(
+      const fontResults = await Promise.allSettled(
         page.layers.filter((layer) => layer.visible && layer.type === 'text').map(loadFont),
+      );
+      const fontError = fontResults.find((result) => result.status === 'rejected');
+      setError(
+        fontError?.status === 'rejected'
+          ? fontError.reason instanceof Error
+            ? fontError.reason.message
+            : 'Schrift konnte nicht geladen werden.'
+          : '',
       );
       for (const layer of page.layers) {
         if (
@@ -542,7 +551,7 @@ export function PackagingCanvas(props: Props) {
     return () => {
       revision.current++;
     };
-  }, [canvas, page, props.selectedIds]);
+  }, [canvas, page, props.selectedIds, props.fontRevision]);
   return (
     <div className="interactionSurface" ref={host}>
       <canvas ref={element} aria-label="Verpackung bearbeiten" />

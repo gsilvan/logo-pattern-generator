@@ -56,11 +56,9 @@ try {
       xMm: 238,
       yMm: 50,
     });
-    const options = { cutMarks: true, dieLines: true, innerGuides: true, textMode: 'text' };
-    const text = await banderoleSvg(doc, options),
-      paths = await banderoleSvg(doc, { ...options, textMode: 'paths' });
-    const pdf = await banderolePdf(doc, options),
-      pdfPaths = await banderolePdf(doc, { ...options, textMode: 'paths' });
+    const options = { cutMarks: true, dieLines: true, innerGuides: true };
+    const text = await banderoleSvg(doc, options);
+    const pdf = await banderolePdf(doc, options);
     const xml = new DOMParser().parseFromString(text.svg, 'image/svg+xml');
     const groups = [...xml.documentElement.children]
       .filter((el) => el.localName === 'g')
@@ -105,10 +103,8 @@ try {
     }));
     return {
       svg: text.svg,
-      paths: paths.svg,
       mixed: mixed.svg,
       pdf: Array.from(new Uint8Array(pdf.output('arraybuffer'))),
-      pdfPaths: Array.from(new Uint8Array(pdfPaths.output('arraybuffer'))),
       mixedPdf: Array.from(new Uint8Array(mixedPdf.output('arraybuffer'))),
       groups,
       rejection,
@@ -119,14 +115,11 @@ try {
   assert.ok(exports.rejection.includes('Unzulässiger Effekt'));
   assert.equal((exports.svg.match(/<image\b/g) || []).length, 0);
   assert.equal((exports.mixed.match(/<image\b/g) || []).length, 1);
-  assert.ok(!exports.paths.includes('<text'));
-  assert.ok(exports.svg.includes('<text'));
+  assert.ok(!exports.svg.includes('<text'));
   for (const [name, data] of [
     ['text.svg', exports.svg],
-    ['paths.svg', exports.paths],
     ['mixed.svg', exports.mixed],
     ['text.pdf', Buffer.from(exports.pdf)],
-    ['paths.pdf', Buffer.from(exports.pdfPaths)],
     ['mixed.pdf', Buffer.from(exports.mixedPdf)],
   ])
     await writeFile(`${output}/${name}`, data);
@@ -134,15 +127,7 @@ try {
   assert.ok(pdf.includes('/TrimBox'));
   assert.ok(pdf.includes('/BleedBox'));
   assert.equal((pdf.match(/\/Subtype\s*\/Image/g) || []).length, 0);
-  assert.equal((pdf.match(/\/FontFile2\b/g) || []).length, 12);
-  assert.equal(
-    (
-      Buffer.from(exports.pdfPaths)
-        .toString('latin1')
-        .match(/\/Subtype\s*\/Image/g) || []
-    ).length,
-    0,
-  );
+  assert.equal((pdf.match(/\/FontFile2\b/g) || []).length, 0);
   assert.equal(
     (
       Buffer.from(exports.mixedPdf)
@@ -153,7 +138,7 @@ try {
   );
   for (const [tag, expected] of [
     ['TrimBox', [10, 10, 245, 57]],
-    ['BleedBox', [5, 5, 250, 62]],
+    ['BleedBox', [7, 7, 248, 60]],
   ]) {
     const coords = pdf
       .match(new RegExp(`/${tag} \\[([^\\]]+)\\]`))[1]
@@ -179,8 +164,7 @@ try {
     await pdf.destroy();
     return { strings, png };
   }, exports.pdf);
-  assert.ok(textCheck.strings.includes('ÄÖÜ ß & Größe'));
-  assert.ok(textCheck.strings.includes('Zweite Zeile'));
+  assert.equal(textCheck.strings.trim(), '');
   await writeFile(`${output}/pdf.png`, Buffer.from(textCheck.png, 'base64'));
   const compareScene = async () =>
     page.evaluate(async () => {
@@ -191,7 +175,6 @@ try {
         cutMarks: false,
         dieLines: false,
         innerGuides: false,
-        textMode: 'text',
       });
       const image = new Image();
       image.src = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
@@ -210,7 +193,7 @@ try {
       URL.revokeObjectURL(image.src);
       const a = actual.getContext('2d').getImageData(0, 0, actual.width, actual.height).data,
         b = ctx.getImageData(0, 0, actual.width, actual.height).data;
-      const bleed = doc.pages[0].bleedMm ?? 3;
+      const bleed = 3;
       let diff = 0,
         count = 0;
       for (
@@ -242,29 +225,6 @@ try {
       globalThis.sceneComparison = { actual: actual.toDataURL(), expected: expected.toDataURL() };
       return diff / count;
     });
-  const pathDifference = await page.evaluate(async ({ svg, paths }) => {
-    const pixels = async (source) => {
-      const image = new Image();
-      image.src = URL.createObjectURL(new Blob([source], { type: 'image/svg+xml' }));
-      await image.decode();
-      const canvas = document.createElement('canvas');
-      canvas.width = 2040;
-      canvas.height = 533;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, 2040, 533);
-      ctx.drawImage(image, 0, 0, 2040, 533);
-      URL.revokeObjectURL(image.src);
-      return ctx.getImageData(0, 0, 2040, 533).data;
-    };
-    const a = await pixels(svg),
-      b = await pixels(paths);
-    let diff = 0;
-    for (let i = 0; i < a.length; i++) diff += Math.abs(a[i] - b[i]);
-    return diff / a.length;
-  }, exports);
-  console.log('Text/path pixel difference:', pathDifference);
-  assert.ok(pathDifference < 1.5, 'Text and paths must preserve the same layout');
   const pdfDifference = await page.evaluate(
     async ({ svg, png }) => {
       const image = async (source) => {
@@ -328,7 +288,8 @@ try {
   assert.equal(await page.locator('.packMarks line').count(), 12);
   await page.getByRole('button', { name: 'Rückgängig', exact: true }).click();
   assert.equal(await page.locator('.packMarks line').count(), 16);
-  await page.getByLabel('Beschnitt (mm)', { exact: true }).selectOption('0');
+  assert.ok(await page.getByText('Beschnitt: 3 mm').isVisible());
+  assert.equal(await page.getByLabel('Beschnitt (mm)', { exact: true }).count(), 0);
   await page.getByLabel('Hintergrundfarbe', { exact: true }).fill('#abccdd');
   await page.getByLabel('Hintergrundbild der Banderole hochladen').setInputFiles({
     name: 'back.svg',
@@ -372,7 +333,10 @@ try {
   const saved = await state();
   await page.reload();
   await page.locator('.upper-canvas').waitFor();
-  assert.deepEqual(await state(), saved);
+  assert.deepEqual(await state(), {
+    ...saved,
+    pages: [{ ...saved.pages[0], bleedMm: 3 }],
+  });
   await page.getByRole('button', { name: 'Verpackungen', exact: true }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Verpackung einpassen', exact: true }).click();
@@ -399,7 +363,7 @@ try {
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   assert.deepEqual(errors, []);
   // Round-trip both delivery formats using the installed Inkscape CLI.
-  for (const name of ['text', 'paths', 'mixed']) {
+  for (const name of ['text', 'mixed']) {
     execFileSync(
       'inkscape',
       [
@@ -412,7 +376,7 @@ try {
     const savedSvg = await readFile(`${output}/${name}-saved.svg`, 'utf8');
     assert.ok(savedSvg.includes('inkscape:label="Hintergrund"'));
     assert.ok(savedSvg.includes('inkscape:label="Markierungen"'));
-    if (name === 'paths') assert.ok(!/<(?:svg:)?text\b/.test(savedSvg));
+    assert.ok(!/<(?:svg:)?text\b/.test(savedSvg));
     execFileSync(
       'inkscape',
       [

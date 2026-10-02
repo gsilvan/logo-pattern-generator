@@ -11,7 +11,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run --globals",
-    "test:browser": "node scripts/smoke.mjs && node scripts/packaging-smoke.mjs && node scripts/packaging-vector-smoke.mjs && node scripts/banderole-smoke.mjs",
+    "test:browser": "node scripts/smoke.mjs && node scripts/packaging-smoke.mjs && node scripts/packaging-vector-smoke.mjs && node scripts/banderole-smoke.mjs && node scripts/local-font-smoke.mjs",
     "test:packaging": "node scripts/packaging-smoke.mjs && node scripts/packaging-vector-smoke.mjs && node scripts/banderole-smoke.mjs"
   },
   "dependencies": {

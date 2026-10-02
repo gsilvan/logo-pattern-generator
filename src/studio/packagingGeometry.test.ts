@@ -45,6 +45,8 @@ describe('packaging print geometry', () => {
         for (const page of doc.pages)
           for (const bleedMm of [0, 3, 5]) {
             const geometry = printGeometry(doc, { ...page, bleedMm });
+            expect(geometry.bleed.x).toBeCloseTo(geometry.trim.x - 3, 6);
+            expect(geometry.bleed.y).toBeCloseTo(geometry.trim.y - 3, 6);
             expect(geometry.marks).toHaveLength(8);
             for (const line of geometry.marks) {
               for (const [x, y] of [

@@ -18,7 +18,7 @@ export function PackagingPreview({
       url = '';
     setError('');
     setSrc('');
-    void packagingSvg(document, options, true, pageIndex)
+    void packagingSvg(document, options, pageIndex)
       .then(({ svg }) => {
         if (!active) return;
         url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
@@ -31,14 +31,7 @@ export function PackagingPreview({
       active = false;
       if (url) URL.revokeObjectURL(url);
     };
-  }, [
-    document,
-    pageIndex,
-    options.cutMarks,
-    options.dieLines,
-    options.innerGuides,
-    options.textMode,
-  ]);
+  }, [document, pageIndex, options.cutMarks, options.dieLines, options.innerGuides]);
   return (
     <>
       {src && (
